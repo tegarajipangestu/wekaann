@@ -5,8 +5,6 @@
  */
 package ml.ann;
 
-import com.sun.image.codec.jpeg.JPEGDecodeParam;
-import java.util.Random;
 
 /**
  *
