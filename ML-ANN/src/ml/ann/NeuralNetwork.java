@@ -37,6 +37,37 @@ public class NeuralNetwork {
     private double learningRate;
     private double momentum;
     private int numLayers;
+    private int numHiddenLayers;
+    private int epoch;
+
+    public int getEpoch() {
+        return epoch;
+    }
+
+    public void setEpoch(int epoch) {
+        this.epoch = epoch;
+    }
+    
+    public void instanceToInput(int index) {
+        for (int i=0;i<index;i++) {
+            input[i] = instances[index][i];
+        }
+    }
+    
+    public void initWeight() {
+        
+    }
+    
+    public NeuralNetwork() {
+        this.seeding();
+        /*Epoch iteration*/
+        for (int i=0;i<getEpoch();i++) {
+            instanceToInput(i);
+            for (int j=0;j<input.length;i++) {
+                
+            } 
+        }
+    }
     
     public double[][][] getWeight() {
         return weight;
@@ -76,14 +107,15 @@ public class NeuralNetwork {
         instances[1][0] = 0;
         instances[1][1] = -1;
         instances[1][2] = -1;
-        instances[3][1] = 1;
-        instances[3][2] = 0.5;
-        instances[3][2] = 0.5;
-        instances[3][2] = 0.5;
+        instances[2][0] = -1;
+        instances[2][1] = -0.5;
+        instances[2][2] = -1;
 
         target[0] = -1;
         target[1] = 1;
         target[2] = 1;
+        
+        setEpoch(instances.length);
     }
 
     public void printTarget() {
@@ -154,15 +186,16 @@ public class NeuralNetwork {
 
     //Kerjaan feli
     public void forwardChaining() {
-
+        
     }
 
     public void backPropagation() {
-        for (int i=0;i<weight.length;i++) {
-            for (int j=0;j<weight[i].length;j++) {
-                for (int k=0;k<weight[i][j].length;k++) {
-                    updateWeight(weight[i][j][k], output[i][j]);
-                }
+        
+        double d = output[output.length-1][];
+                
+        for (int i=numLayers-1;i>=0;i--) {
+            for (int j=0;j<output[i].length;j++) {
+                weight[i][j-1][j] = updateWeight(weight[i][j-1][j], output[i][j]);
             }
         }
     }
