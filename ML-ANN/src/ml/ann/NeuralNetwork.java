@@ -144,12 +144,12 @@ public class NeuralNetwork {
         this.momentum = momentum;
     }
 
-    public void errorCount() {
-        
+    public double errorCount(double target, double output) {
+        return output*(1-output)*(target-output);
     }
 
-    public void updateWeight() {
-
+    public double updateWeight(double weight, double output) {
+        return weight+(learningRate*errorCount(weight, output)*output);
     }
 
     //Kerjaan feli
@@ -158,10 +158,13 @@ public class NeuralNetwork {
     }
 
     public void backPropagation() {
-        for (int i=instances.length-1;i>=0;i--) {
-            for (int j=0;j<instances[i].length.i++)
+        for (int i=0;i<weight.length;i++) {
+            for (int j=0;j<weight[i].length;j++) {
+                for (int k=0;k<weight[i][j].length;k++) {
+                    updateWeight(weight[i][j][k], output[i][j]);
+                }
+            }
         }
-
     }
 
     //Kerjaan feli
@@ -170,7 +173,7 @@ public class NeuralNetwork {
     }
 
     public void numericToBinary() {
-
+        
     }
 
     public void nominalToBinary() {
