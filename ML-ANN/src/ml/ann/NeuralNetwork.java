@@ -28,15 +28,51 @@ package ml.ann;
  * @author tegarnization
  */
 public class NeuralNetwork {
-    
+
     private double[][][] weight; // [layer sumber][neuron sumber][neuron tujuan]
-    private double[] input; 
+    private double[] input;
+    private double[] target;
+    private double[][] instances; //[n-instance][n-attribute]
     private double[][] output; // [layer sumber][neuron sumber]
     private double learningRate;
     private double momentum;
 
     public double[][][] getWeight() {
         return weight;
+    }
+
+    private void seeding() {
+        instances = new double[3][3];
+        target = new double[3];
+
+        instances[0][0] = 1;
+        instances[0][1] = 0;
+        instances[0][2] = 1;
+        instances[1][0] = 0;
+        instances[1][1] = -1;
+        instances[1][2] = -1;
+        instances[3][1] = 1;
+        instances[3][2] = 0.5;
+        instances[3][2] = 0.5;
+        instances[3][2] = 0.5;
+
+        target[0] = -1;
+        target[1] = 1;
+        target[2] = 1;
+    }
+
+    public void printTarget() {
+        for (int i = 0; i < target.length; i++) {
+            System.out.println("Target[" + i + "] =" + target[i]);
+        }
+    }
+
+    public void printInstances() {
+        for (int i = 0; i < instances.length; i++) {
+            for (int j = 0; j < instances[i].length; j++) {
+                System.out.println("Instances[" + i + "][" + j + "] =" + instances[i][j]);
+            }
+        }
     }
 
     public void setWeight(double[][][] weight) {
@@ -82,42 +118,42 @@ public class NeuralNetwork {
         this.learningRate = learningRate;
         this.momentum = momentum;
     }
-    
+
     public void errorCount() {
-        
+
     }
-    
+
     public void updateWeight() {
-        
+
     }
-    
+
     //Kerjaan feli
     public void forwardChaining() {
-        
+
     }
-    
+
     public void backPropagation() {
-        
+
     }
-    
+
     //Kerjaan feli
     public double activationFunction() {
         return 0;
     }
-    
+
     public void numericToBinary() {
-        
+
     }
-    
+
     public void nominalToBinary() {
-        
+
     }
-    
+
     public void binaryToNominal() {
-        
+
     }
-    
+
     public void binaryToNumeric() {
-        
+
     }
 }
