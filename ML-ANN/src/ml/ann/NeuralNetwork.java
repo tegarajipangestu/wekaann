@@ -91,6 +91,7 @@ public class NeuralNetwork {
         
     }
     
+    //Kerjaan feli
     public void forwardChaining() {
         
     }
@@ -99,6 +100,7 @@ public class NeuralNetwork {
         
     }
     
+    //Kerjaan feli
     public double activationFunction() {
         return 0;
     }
