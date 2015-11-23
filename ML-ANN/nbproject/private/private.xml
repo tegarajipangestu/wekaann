@@ -3,7 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/ITB/Semester7/ML/TUBES2/ML-ANN/src/ml/ann/SinglePTR.java</file>
+            <file>file:/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/SinglePTR.java</file>
+            <file>file:/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/weka/classifiers/functions/neural/NeuralMethod.java</file>
+            <file>file:/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/weka/classifiers/functions/MultilayerPerceptron.java</file>
+            <file>file:/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/BackPropagation.java</file>
         </group>
     </open-files>
 </project-private>
