@@ -36,9 +36,34 @@ public class NeuralNetwork {
     private double[][] output; // [layer sumber][neuron sumber]
     private double learningRate;
     private double momentum;
-
+    private int numLayers;
+    
     public double[][][] getWeight() {
         return weight;
+    }
+
+    public double[] getTarget() {
+        return target;
+    }
+
+    public void setTarget(double[] target) {
+        this.target = target;
+    }
+
+    public double[][] getInstances() {
+        return instances;
+    }
+
+    public void setInstances(double[][] instances) {
+        this.instances = instances;
+    }
+
+    public int getNumLayers() {
+        return numLayers;
+    }
+
+    public void setNumLayers(int numLayers) {
+        this.numLayers = numLayers;
     }
 
     private void seeding() {
@@ -120,7 +145,7 @@ public class NeuralNetwork {
     }
 
     public void errorCount() {
-
+        
     }
 
     public void updateWeight() {
@@ -133,6 +158,9 @@ public class NeuralNetwork {
     }
 
     public void backPropagation() {
+        for (int i=instances.length-1;i>=0;i--) {
+            for (int j=0;j<instances[i].length.i++)
+        }
 
     }
 
