@@ -53,11 +53,7 @@ public class NeuralNetwork {
             input[i] = instances[index][i];
         }
     }
-    
-    public void initWeight() {
         
-    }
-    
     public NeuralNetwork() {
         this.seeding();
         /*Epoch iteration*/
@@ -188,11 +184,44 @@ public class NeuralNetwork {
     public void forwardChaining() {
         
     }
+    
+    
+    public void setupNetwork() {
+        int idxLastLayer = numLayers-1;
+        int numAttribute = instances[0].length; //assuming each instance has same number of attribute
+        int idxFirstLayer = 0;
+        int numClasses = target.length;
+        for (int i=0;i<numLayers;i++) {
+            if (i==idxFirstLayer) {
+                input = new double[numAttribute];
+                output = new double[i][numAttribute];
+            }
+            else if (i==idxLastLayer) {
+                input = new double[numClasses];
+                output = new double[i][numClasses];
+            }
+            else { //hidden layers
+                int numNeuronHiddenLayer = (numAttribute+numClasses) / 2;
+                output = new double[i][numNeuronHiddenLayer];
+            }
+        }
+    }
+    
+    /**
+     * Initializing weight by 0
+     */
+    public void initWeight() {
+        for (int i=0;i<weight.length;i++) {
+            for (int j=0;j<weight[i].length;j++) {
+                for (int k=0;k<weight[i][j].length;k++) {
+                    weight[i][j][k] = 0;
+                }
+            }
+        }
+    }
 
     public void backPropagation() {
         
-        double d = output[output.length-1][];
-                
         for (int i=numLayers-1;i>=0;i--) {
             for (int j=0;j<output[i].length;j++) {
                 weight[i][j-1][j] = updateWeight(weight[i][j-1][j], output[i][j]);
@@ -204,7 +233,7 @@ public class NeuralNetwork {
     public double activationFunction() {
         return 0;
     }
-
+    
     public void numericToBinary() {
         
     }
