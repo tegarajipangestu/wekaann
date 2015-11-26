@@ -39,6 +39,7 @@ public class NeuralNetwork {
     private int numLayers;
     private int numHiddenLayers;
     private int epoch;
+    private boolean hasBias;
 
     public int getEpoch() {
         return epoch;
@@ -232,6 +233,20 @@ public class NeuralNetwork {
     //Kerjaan feli
     public double activationFunction() {
         return 0;
+    }
+    
+    public double sigmoidFunction (int idxLayer, int idxNeuron) {
+        int firstLayer=0;
+        double result = 0;
+        if (idxLayer==firstLayer) {
+            return input[idxNeuron] * 1; //assuming weight in first layer is 1
+        }
+        else {
+            for (int i=0;i<output[idxLayer-1].length;i++){
+                    result += output[idxLayer-1][i] * weight[idxLayer-1][i][idxNeuron];
+            }
+        }
+        return 1/(1+Math.exp(-1*result));
     }
     
     public void numericToBinary() {
