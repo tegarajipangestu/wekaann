@@ -23,6 +23,11 @@
  */
 package ml.ann;
 
+import static java.lang.Math.exp;
+import weka.core.Instance;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.NominalToBinary;
+
 /**
  *
  * @author tegarnization
@@ -40,6 +45,24 @@ public class NeuralNetwork {
     private int numHiddenLayers;
     private int epoch;
 
+    public NeuralNetwork() {
+        this.seeding();
+        /*Epoch iteration*/
+        for (int i=0;i<getEpoch();i++) {
+            instanceToInput(i);
+            for (int j=0;j<input.length;i++) {
+                
+            } 
+        }
+    }
+    public NeuralNetwork(double[][][] weight, double[] input, double[][] output, double learningRate, double momentum) {
+        this.weight = weight;
+        this.input = input;
+        this.output = output;
+        this.learningRate = learningRate;
+        this.momentum = momentum;
+    }
+    
     public int getEpoch() {
         return epoch;
     }
@@ -54,20 +77,17 @@ public class NeuralNetwork {
         }
     }
     
-    public void initWeight() {
+    public void initWeight(double newWeight) {
         
     }
     
-    public NeuralNetwork() {
-        this.seeding();
-        /*Epoch iteration*/
-        for (int i=0;i<getEpoch();i++) {
-            instanceToInput(i);
-            for (int j=0;j<input.length;i++) {
-                
-            } 
-        }
+    /* Untuk weight random
+    **/
+    public void initWeight(){
+	    initWeight(Math.random());
     }
+    
+    
     
     public double[][][] getWeight() {
         return weight;
@@ -168,13 +188,7 @@ public class NeuralNetwork {
         this.momentum = momentum;
     }
 
-    public NeuralNetwork(double[][][] weight, double[] input, double[][] output, double learningRate, double momentum) {
-        this.weight = weight;
-        this.input = input;
-        this.output = output;
-        this.learningRate = learningRate;
-        this.momentum = momentum;
-    }
+    
 
     public double errorCount(double target, double output) {
         return output*(1-output)*(target-output);
@@ -186,12 +200,16 @@ public class NeuralNetwork {
 
     //Kerjaan feli
     public void forwardChaining() {
-        
+        for(int layerIndex = 0; layerIndex < weight.length; layerIndex ++){
+		  for (int nodeIndex = 0; nodeIndex < weight[layerIndex].length; nodeIndex++){
+			  
+		  }
+	  }
     }
 
     public void backPropagation() {
         
-        double d = output[output.length-1][];
+        //double d = output[output.length-1][];
                 
         for (int i=numLayers-1;i>=0;i--) {
             for (int j=0;j<output[i].length;j++) {
@@ -201,12 +219,28 @@ public class NeuralNetwork {
     }
 
     //Kerjaan feli
-    public double activationFunction() {
-        return 0;
+    /**
+     * I.S: Weight dan input tidak boleh kosong
+     **/
+    public double activationFunction(String function, double input) {
+	    double res = 0;
+	    switch (function.toLowerCase()){
+		    case "sigmoid":
+			    res = 1 / (1 + exp(input) );
+			    break;
+		    case "linear":
+			    res = input;
+			    break;
+		    case "step":
+			    break;
+		    
+	    }
+        return res;
     }
 
     public void numericToBinary() {
-        
+	    Instance I;
+	    
     }
 
     public void nominalToBinary() {
