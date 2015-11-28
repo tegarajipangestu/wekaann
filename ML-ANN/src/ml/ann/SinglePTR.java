@@ -29,7 +29,7 @@ public class SinglePTR {
     
     
     public SinglePTR (int num_instance, int num_input, int max_epoch, double LR, double threshold,
-                      double[][]input, double[] target, int algo, boolean isRandomWeight)
+                      double[][]input, double[] target, double[][] weight, int algo, boolean isRandomWeight)
     {
         this.num_instance = num_instance;
         this.num_input = num_input;
@@ -41,7 +41,15 @@ public class SinglePTR {
         this.input = new double[num_instance][num_input+1];
         //this.input = input.clone();
         this.input = input;
+       
         this.weight = new double[num_input+1][1];
+        this.weight = weight;
+        
+        for(int i=0; i<num_instance; i++)
+        {
+            input[i][0] = 1.0;
+        }
+        
         if(algo == 1)
             this.buildClassifier(1, isRandomWeight);
         else if (algo == 2)
@@ -82,6 +90,8 @@ public class SinglePTR {
         {
             //hitung output dan error awal
             System.out.println("--- Iterasi"+iterator+" ---");
+            
+           
             for(int i=0; i<num_instance; i++)
             {
                 outputawal[i] = 0.0;
@@ -157,11 +167,12 @@ public class SinglePTR {
         
         //set apakah mau dirandom weightnya
         if(randomWeight)
-            setWeight();
+        {    setWeight();}
         
         while(iterator<=max_epoch && !stop)
         {
             System.out.println("--- Iterasi "+ iterator + " ---");
+            
             for(int i = 0; i < num_instance; i++)
             {
                 //hitung output
@@ -241,39 +252,39 @@ public class SinglePTR {
         }
     }
     
-        public static void main(String[] args){
-        int num_instance = 3;
-        int num_input = 3;
-        int max_epoch = 10;
-        double LR = 0.1;
-        double threshold = 0.01;
-        double[][] input = new double[num_instance][num_input+1];
-        double[] target = new double[num_instance];
-        double[] error = new double[num_instance];
-        double[] output = new double[num_instance];
-        double[][] weight = new double[num_input+1][1];
-        input[0][0] = 1.0;
-        input[0][1] = 1.0;
-        input[0][2] = 0.0;
-        input[0][3] = 1.0;
-        input[1][0] = 1.0;
-        input[1][1] = 0.0;
-        input[1][2] = -1.0;
-        input[1][3] = -1.0;
-        input[2][0] = 1.0;
-        input[2][1] = -1.0;
-        input[2][2] = -0.5;
-        input[2][3] = -1.0;
-        target[0]  = -1;
-        target[1]  = 1;
-        target[2]  = 1;
-        weight[0][0] = 0.0;
-        weight[1][0] = 0.0;
-        weight[2][0] = 0.0;
-        weight[3][0] = 0.0;
-
-        SinglePTR lala = new SinglePTR(input.length, num_input, max_epoch, LR, threshold,
-                      input, target, 2, false);
-        
-    }
+//        public static void main(String[] args){
+//        int num_instance = 3;
+//        int num_input = 3;
+//        int max_epoch = 10;
+//        double LR = 0.1;
+//        double threshold = 0.01;
+//        double[][] input = new double[num_instance][num_input+1];
+//        double[] target = new double[num_instance];
+//        double[] error = new double[num_instance];
+//        double[] output = new double[num_instance];
+//        double[][] weight = new double[num_input+1][1];
+//        input[0][0] = 1.0;
+//        input[0][1] = 1.0;
+//        input[0][2] = 0.0;
+//        input[0][3] = 1.0;
+//        input[1][0] = 1.0;
+//        input[1][1] = 0.0;
+//        input[1][2] = -1.0;
+//        input[1][3] = -1.0;
+//        input[2][0] = 1.0;
+//        input[2][1] = -1.0;
+//        input[2][2] = -0.5;
+//        input[2][3] = -1.0;
+//        target[0]  = -1;
+//        target[1]  = 1;
+//        target[2]  = 1;
+//        weight[0][0] = 0.0;
+//        weight[1][0] = 0.0;
+//        weight[2][0] = 0.0;
+//        weight[3][0] = 0.0;
+//
+//        SinglePTR lala = new SinglePTR(input.length, num_input, max_epoch, LR, threshold,
+//                      input, target, 2, false);
+//        
+//    }
 }
