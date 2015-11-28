@@ -239,6 +239,7 @@ public class SinglePTR {
                 error[i] = target[i]-output[i];
             
             }
+            
             //hitung total error
             double sumerror = 0.0;
             for(int i=0; i<num_instance;i++)
@@ -250,6 +251,15 @@ public class SinglePTR {
             System.out.println("Total error: "+0.5*sumerror);
             iterator++;
         }
+    }
+    
+    public double classifyInstance(double[] input){
+        double output = 0.0;
+        for(int i=0; i<input.length; i++)
+        {
+            output += input[i]*weight[i][0];
+        }
+        return output;
     }
     
 //        public static void main(String[] args){

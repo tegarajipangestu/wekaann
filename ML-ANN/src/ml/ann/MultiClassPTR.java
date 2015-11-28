@@ -242,6 +242,25 @@ public class MultiClassPTR {
         }
     }
      
+     public double classifyInstance(double[] input){
+        double[] output = new double[num_output];
+        for(int out=0; out<num_output; out++)
+        {
+            output[out] = 0.0;
+            for(int i=0; i<input.length; i++)
+            {
+                output[out] += input[i]*weight[i][0];
+            }
+        }
+        int out = 0;
+        for (int i=1; i<num_output; i++)
+        {
+            if(output[i] > output[i-1])
+                out = i;
+        }
+        return output[out];
+    }
+     
         public static void main(String[] args){
         int num_instance = 3;
         int num_input = 3;
