@@ -263,7 +263,7 @@ public class MultiClassPTR {
 		double[] error = new double[num_instance];
 		double[] output = new double[num_instance];
 		double[][] weight = new double[num_input + 1][1];
-
+		
 		input[0][0] = 1.0;
 		input[0][1] = 1.0;
 		input[0][2] = 0.0;

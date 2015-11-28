@@ -12,6 +12,7 @@ import java.util.Scanner;
 import weka.core.Instances;
 import weka.filters.Filter;
 import weka.filters.supervised.attribute.NominalToBinary;
+import weka.filters.unsupervised.attribute.Normalize;
 
 /**
  *
@@ -20,6 +21,7 @@ import weka.filters.supervised.attribute.NominalToBinary;
 public class MainPTR {
 
 	public static NominalToBinary m_nominalToBinaryFilter;
+	public static Normalize m_normalize;
 
 	public static void main(String[] args) throws FileNotFoundException, IOException, Exception {
 		boolean randomWeight;
@@ -30,6 +32,8 @@ public class MainPTR {
 		int maxEpoch = 10;
 
 		m_nominalToBinaryFilter = new NominalToBinary();
+		m_normalize = new Normalize();
+		
 		Scanner in = new Scanner(System.in);
 		System.out.println("Lokasi file: ");
 
@@ -78,11 +82,13 @@ public class MainPTR {
 		train.setClassIndex(train.numAttributes() - 1);
 		m_nominalToBinaryFilter.setInputFormat(train);
 		train = Filter.useFilter(train, m_nominalToBinaryFilter);
+		m_normalize.setInputFormat(train);
+		train = Filter.useFilter(train, m_normalize);
+		
 		double[][] input;
 		input = new double[train.numInstances()][train.numAttributes()];
 		for (int i = 0; i < train.numInstances(); i++) {
 			for (int j = 1; j < train.numAttributes(); j++) {
-				System.out.println(train.attribute(j - 1));
 				input[i][j] = train.instance(i).value(j - 1);
 				System.out.println("input[" + i + "][" + j + "]: " + input[i][j]);
 			}
