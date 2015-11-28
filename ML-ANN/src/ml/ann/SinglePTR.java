@@ -17,6 +17,7 @@ public class SinglePTR {
     public int max_epoch; //jika error tidak konvergen sampai max_epoch, berhenti
     public double learning_rate; //dipakai di perhitungan
     public double threshold;
+    public double momentum;
     public double[][] input; //data masukan
     public double[] target; //target sebanyak instance_input
     
@@ -29,7 +30,7 @@ public class SinglePTR {
     
     
     public SinglePTR (int num_instance, int num_input, int max_epoch, double LR, double threshold,
-                      double[][]input, double[] target, double[][] weight, int algo, boolean isRandomWeight)
+                      double[][]input, double[] target, double[][] weight, int algo, double momentum, boolean isRandomWeight)
     {
         this.num_instance = num_instance;
         this.num_input = num_input;
@@ -37,6 +38,7 @@ public class SinglePTR {
         this.learning_rate= LR;
         this.target = new double[num_instance];
         this.target = target;
+        this.momentum = momentum;
         this.threshold = threshold;
         this.input = new double[num_instance][num_input+1];
         //this.input = input.clone();
@@ -109,7 +111,7 @@ public class SinglePTR {
             {
                 for(int j=0; j<=num_input;j++)
                 {
-                    deltaweight[i][j] = learning_rate*input[i][j]*errorawal[i];
+                    deltaweight[i][j] = learning_rate*momentum*input[i][j]*errorawal[i];
                     //System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
                 }
             }
@@ -204,7 +206,7 @@ public class SinglePTR {
                 //hitung deltaWeight dan setNewWeight
                 for(int j=0; j<=num_input; j++)
                 {
-                    deltaweight[j] = learning_rate*error[i]*input[i][j];
+                    deltaweight[j] = learning_rate*momentum*error[i]*input[i][j];
                     weight[j][0] = weight[j][0]+deltaweight[j];
                     //System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
                 }

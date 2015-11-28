@@ -19,9 +19,10 @@ public class MultiClassPTR {
     public int max_epoch;
     public double learning_rate;
     public double threshold;
+    public double momentum;
     
     public MultiClassPTR(int num_instance, int num_input,  int num_output, double[][] input, double[][] weight,
-                         double[][]target, int max_epoch, double learning_rate, double threshold, int algo, boolean isRandomWeight){
+                         double[][]target, int max_epoch, double learning_rate, double threshold, int algo, double momentum, boolean isRandomWeight){
         this.num_instance = num_instance;
         this.num_input = num_input;
         this.num_output = num_output;
@@ -29,6 +30,7 @@ public class MultiClassPTR {
         this.input = input;
         weight = new double[num_input+1][num_output];
         this.weight = weight;
+        this.momentum = momentum;
         this.target = target;
         this.max_epoch = max_epoch;
         this.learning_rate = learning_rate;
@@ -104,7 +106,7 @@ public class MultiClassPTR {
                     //hitung deltaWeight dan setNewWeight
                     for(int j=0; j<=num_input; j++)
                     {
-                        deltaweight[j][out] = learning_rate*error[i][out]*input[i][j];
+                        deltaweight[j][out] = learning_rate*momentum*error[i][out]*input[i][j];
                         weight[j][out] = weight[j][out]+deltaweight[j][out];
                         //System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
                     }
@@ -192,7 +194,7 @@ public class MultiClassPTR {
                 {
                     for(int j=0; j<=num_input;j++)
                     {
-                        deltaweight[i][j] = learning_rate*input[i][j]*errorawal[i][out];
+                        deltaweight[i][j] = learning_rate*momentum*input[i][j]*errorawal[i][out];
                         //System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
                     }
                 }
@@ -267,6 +269,7 @@ public class MultiClassPTR {
         int max_epoch = 10;
         int num_output = 1;
         double LR = 0.1;
+        double momentum = 0.9;
         double threshold = 0.01;
         double[][] input = new double[num_instance][num_input+1];
         double[][] target = new double[num_instance][num_output];
@@ -293,7 +296,7 @@ public class MultiClassPTR {
         weight[2][0] = 0.0;
         weight[3][0] = 0.0;
 
-        MultiClassPTR lala = new MultiClassPTR(input.length, num_input, num_output, input, weight, target, max_epoch, LR, threshold, 3, false);
+        MultiClassPTR lala = new MultiClassPTR(input.length, num_input, num_output, input, weight, target, max_epoch, LR, threshold, 3, momentum, false);
         
     }
     
