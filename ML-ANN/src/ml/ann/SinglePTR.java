@@ -5,8 +5,6 @@
  */
 package ml.ann;
 
-import com.sun.image.codec.jpeg.JPEGDecodeParam;
-import java.util.Random;
 
 /**
  *
@@ -54,8 +52,9 @@ public class SinglePTR {
         }
         
     }
+
     
-      public void setWeight(){
+    public void setWeight(){
         double rangeMin = 0.0;
         double rangeMax = 1.0;
         for(int i = 1; i <= num_input-1; i++)
