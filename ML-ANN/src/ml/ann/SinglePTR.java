@@ -27,8 +27,9 @@ public class SinglePTR {
     public double[] output;
     public double[] error;
     
+    
     public SinglePTR (int num_instance, int num_input, int max_epoch, double LR, double threshold,
-                      double[][]input, double[] target, boolean fungsi_aktivasi)
+                      double[][]input, double[] target, int algo, boolean isRandomWeight)
     {
         this.num_instance = num_instance;
         this.num_input = num_input;
@@ -37,30 +38,21 @@ public class SinglePTR {
         this.target = new double[num_instance];
         this.target = target;
         this.threshold = threshold;
-        this.input = new double[num_instance][num_input];
+        this.input = new double[num_instance][num_input+1];
+        //this.input = input.clone();
         this.input = input;
-        this.weight = new double[num_input][1];
-        weight[0][0] = 0.0; //ini weight bias
-        input[0][0] = 1.0; //ini bias, selalu 1
-        this.error = new double[input.length];
-        this.output = new double[input.length];
+        this.weight = new double[num_input+1][1];
+        if(algo == 1)
+            this.buildClassifier(1, isRandomWeight);
+        else if (algo == 2)
+            this.buildClassifier(2, isRandomWeight);
+        else if (algo == 3)
+        {
+            this.buildClassifierBatch(isRandomWeight);
+        }
+        
     }
-    
-//    public SinglePTR(){
-//       //instance_input = 0;
-//       num_input = 0;
-//       max_epoch = 0;
-//       learning_rate = 0.0;
-//       target = new double[instance];
-//       weight = new double[num_input+1][1];
-//       input = new double[instance][num_input+1];
-//       output = new double[instance];
-//       weight[0][0] = 0.0; //ini weight bias
-//       for(int i = 0; i < instance; i++)  //ini bias, selalu 1
-//       {
-//           input[i][0] = 1.0;
-//       }
-//    }
+
     
     public void setWeight(){
         double rangeMin = 0.0;
@@ -70,206 +62,218 @@ public class SinglePTR {
             weight[i][0] = Math.random() * (rangeMax - rangeMin) + rangeMin;
         }
     }
-    
-    public double countOutput(boolean fungsi_aktivasi, int it)
-    {
-        double retval;
-        double sum = 0.0;
-        for(int i = 0; i <= num_input-1; i++)
-        {
-            sum = sum + (input[it][i] * weight[i][0]);
-        }
-        if(fungsi_aktivasi)
-        {
-            if(sum >= 0)
-                retval = 1.0;
-            else retval = -1.0;
-        }
-        else
-        {
-            retval = sum;
-        }
-        return retval;
-    }
 
     
-    public double countError(boolean fungsi_aktivasi, int it){
-        double err = target[it] - output[it];
-        return err;
-    }
-    
-    public void countErrorInstaces(boolean fungsi_aktivasi)
-    {
-        for(int i=0; i<= input.length; i++)
-        {
-            error[i] = countError(fungsi_aktivasi, i);
-        }
-    }
-    
-    public double[] countDeltaWeight(boolean fungsi_aktivasi, int it)
-    {
-        double deltaweight[] = new double[num_input];
-        double errorinstance = countError(fungsi_aktivasi, it);
-//        System.out.println("num_input: "+num_input);
-//        System.out.println("errorinstance "+it + ": " + errorinstance);
-        
-        for(int i=0; i <= num_input-1; i++)
-        {
-            deltaweight[i] = learning_rate*errorinstance*input[it][i];
-            //System.out.println("Deltaweight instance"+ it +" , " + i + ": " + deltaweight[i]);
-        }
-        return deltaweight;
-    }
-    
-    public void setNewWeight(boolean fungsi_aktivasi, int it){
-        double delta[] = new double[num_input];
-        delta = countDeltaWeight(fungsi_aktivasi, it);
-        
-        for(int i=0; i<=num_input-1; i++)
-        {
-            weight[i][0] = weight[i][0] + delta[i];
-        }
-    }
-    
-    
-    public double countTotalError()
-    {
-        double sum = 0.0;
-        for(int i=0; i<input.length; i++)
-        {
-            double temp = Math.pow(target[i]-output[i], 2);
-            sum+=temp;
-        }
-        return 0.5*sum;
-    }
-    
-    public boolean isConvergent()
-    {
-        if(countTotalError() < threshold)
-            return true;
-        else return false;
-    }
-    
-   
-    
-    public void buildclassifier(){
-//        SinglePTR test = new SinglePTR();
-//        test.instance = 3;
-//        
-//        test.target = new double[test.instance];
-//        test.error = new double[test.instance];
-//        test.output = new double[test.instance];
-//        test.max_epoch = 10;
-//        
-//        test.num_input = 3;
-//        test.weight = new double[test.num_input+1][1];
-//        test.input = new double[test.instance][test.num_input+1];
-          setWeight();
-//        test.learning_rate = 0.1;
-//        test.threshold = 0.01;
-//        
-//        test.input[0][0] = 1.0;
-//        test.input[0][1] = 1.0;
-//        test.input[0][2] = 0.0;
-//        test.input[0][3] = 1.0;
-//        
-//        test.input[1][0] = 1.0;
-//        test.input[1][1] = 0.0;
-//        test.input[1][2] = -1.0;
-//        test.input[1][3] = -1.0;
-//        
-//        test.input[2][0] = 1.0;
-//        test.input[2][1] = -1.0;
-//        test.input[2][2] = -0.5;
-//        test.input[2][3] = -1.0;
-//        
-//        
-//        test.target[0]  = -1;
-//        test.target[1]  = 1;
-//        test.target[2]  = 1;
-//        
-//        
-//        test.weight[0][0] = 1.0;
-//        test.weight[1][0] = 1.0;
-//        test.weight[2][0] = 1.0;
-//        test.weight[3][0] = 1.0;
-//        
-        
-//        test.input[0][0] = 1.0;
-//        test.input[0][1] = 5.1;
-//        test.input[0][2] = 3.5;
-//        test.input[0][3] = 1.4;
-//        test.input[0][4] = 0.2;
-//        test.input[1][0] = 1.0;
-//        test.input[1][1] = 4.9;
-//        test.input[1][2] = 3.0;
-//        test.input[1][3] = 1.4;
-//        test.input[1][4] = 0.2;
-//        test.input[2][0] = 1.0;
-//        test.input[2][1] = 4.7;
-//        test.input[2][2] = 3.2;
-//        test.input[2][3] = 1.3;
-//        test.input[2][4] = 0.2;
-//        
-//        test.input[3][0] = 1.0;
-//        test.input[3][1] = 7.0;
-//        test.input[3][2] = 3.2;
-//        test.input[3][3] = 4.7;
-//        test.input[3][4] = 1.4;
-//        
-//        test.input[4][0] = 1.0;
-//        test.input[4][1] = 6.4;
-//        test.input[4][2] = 3.2;
-//        test.input[4][3] = 4.5;
-//        test.input[4][4] = 1.5;
-//        
-//        test.input[5][0] = 1.0;
-//        test.input[5][1] = 6.9;
-//        test.input[5][2] = 3.1;
-//        test.input[5][3] = 4.9;
-//        test.input[5][4] = 1.5;
-//        
-//        
-//        
-//        test.target[0]  = 1;
-//        test.target[1]  = 1;
-//        test.target[2]  = 1;
-//        test.target[3] = -1;
-//        test.target[4] = -1;
-//        test.target[5] = -1;
-//        
-//        
-//        test.weight[0][0] = 0.0;
-//        test.weight[1][0] = 0.0;
-//        test.weight[2][0] = 0.0;
-//        test.weight[3][0] = 0.0;
-//        test.weight[4][0] = 0.0;
-        
-        //System.out.println("Output: " + test.countOutput(false));
+    public void buildClassifierBatch(boolean setweight){
+        double[] outputawal = new double[num_instance];
+        double[] errorawal = new double[num_instance];
+        double[] outputakhir = new double[num_instance];
+        double[] errorakhir = new double[num_instance];
+        double[][] deltaweight = new double[num_instance][num_input+1];
+        double[] sumdelta = new double[num_input+1];
         boolean stop = false;
-        int iterator = 0;
+        int iterator = 1;
         
-        while(stop==false && iterator < max_epoch)
+        //pilihan untuk inisialisasi weight
+        if(setweight)
+            setWeight();
+        
+        while(iterator<=max_epoch && !stop)
         {
-            
-            for(int i=0; i<input.length; i++)
+            //hitung output dan error awal
+            System.out.println("--- Iterasi"+iterator+" ---");
+            for(int i=0; i<num_instance; i++)
             {
-                setNewWeight(true, i);
-                output[i] = countOutput(true, i);
-                error[i] = countError(true, i);
+                outputawal[i] = 0.0;
+                for(int j=0;j<=num_input; j++)
+                {
+                    outputawal[i]+=input[i][j]*weight[j][0];
+                }
+                //System.out.println("outputawal["+i+"]: "+outputawal[i]);
+                errorawal[i] = target[i]-outputawal[i];
+                //System.out.println("errorawal["+i+"]: "+errorawal[i]);
             }
-            if(isConvergent())
+            
+            //hitung deltaWeight0 - deltaWeightN
+            for(int i=0; i<num_instance;i++)
             {
+                for(int j=0; j<=num_input;j++)
+                {
+                    deltaweight[i][j] = learning_rate*input[i][j]*errorawal[i];
+                    //System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
+                }
+            }
+            
+            //hitung sumdelta, untuk hitung output akhir
+            for(int i = 0; i <= num_input; i++)
+            {
+                sumdelta[i]=0.0;
+                for(int j = 0; j<num_instance; j++)
+                {
+                    sumdelta[i] += deltaweight[j][i];
+                }
+                //System.out.println("sumdelta["+i+"]: "+sumdelta[i]);
+            }
+            
+            //hitung outputakhir
+            for(int i=0; i<num_instance; i++)
+            {
+                outputakhir[i] = 0.0;
+                for(int j = 0; j<= num_input; j++)
+                {
+                    outputakhir[i] += input[i][j]*(sumdelta[j]+weight[j][0]);
+                }
+                //System.out.println("outputakhir["+i+"]: "+outputakhir[i]);
+                errorakhir[i] = target[i]-outputakhir[i];
+                //System.out.println("errorakhir["+i+"]: "+errorakhir[i]);
+            }
+            
+            //hitung error akhir
+            double sumerror = 0.0;
+            for(int i=0; i<num_instance;i++)
+            {
+                sumerror+= Math.pow(errorakhir[i], 2);
+            }
+            if(0.5*sumerror < threshold)
                 stop = true;
+            else
+            {
+                for(int i=0; i<=num_input; i++)
+                {
+                    weight[i][0] = weight[i][0]+sumdelta[i];
+                }
             }
-            System.out.println("Total Error: " + countTotalError());
-            
+            System.out.println("error total: " + 0.5*sumerror);
             iterator++;
         }
-        
-        System.out.println("Berhenti setelah " + iterator + " iterasi");
-        
     }
     
+    public void buildClassifier(int algo, boolean randomWeight){
+        double[] output = new double[num_instance];
+        double[] error = new double[num_instance];
+        double[] deltaweight = new double [num_input+1];
+        boolean stop = false;
+        int iterator = 1;
+        
+        //set apakah mau dirandom weightnya
+        if(randomWeight)
+            setWeight();
+        
+        while(iterator<=max_epoch && !stop)
+        {
+            System.out.println("--- Iterasi "+ iterator + " ---");
+            for(int i = 0; i < num_instance; i++)
+            {
+                //hitung output
+                if(algo == 1) //kalau algoritma PTR, pake step
+                {
+                    output[i] = 0.0;
+                    for(int j=0; j<=num_input; j++)
+                    {
+                        output[i]+= input[i][j]*weight[j][0];
+                    }
+                    if(output[i] >= 0)
+                    {
+                        output[i] = 1;
+                    }
+                    else output[i] = -1;
+                }
+                else if(algo == 2) //kalau delta rule, ga pake step
+                {
+                    output[i] = 0.0;
+                    for(int j=0; j<=num_input; j++)
+                    {
+                        output[i]+= input[i][j]*weight[j][0];
+                    }
+                }
+                    //System.out.println("output awal["+i+"]: "+output[i]);
+                //hitung error
+                error[i] = target[i]-output[i];
+                
+                //hitung deltaWeight dan setNewWeight
+                for(int j=0; j<=num_input; j++)
+                {
+                    deltaweight[j] = learning_rate*error[i]*input[i][j];
+                    weight[j][0] = weight[j][0]+deltaweight[j];
+                    //System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
+                }
+            }
+            
+            for(int i=0; i<num_instance; i ++)
+            {
+                //hitung output akhir
+                if(algo == 1)
+                {
+                    output[i] = 0.0;
+                    for(int j=0; j<=num_input; j++)
+                    {
+                        output[i]+= input[i][j]*weight[j][0];
+                    }
+                    if(output[i] >= 0)
+                    {
+                        output[i] = 1;
+                    }
+                    else output[i] = -1;
+                }
+                else if(algo == 2)
+                {
+                    output[i] = 0.0;
+                    for(int j=0; j<=num_input; j++)
+                    {
+                        output[i]+= input[i][j]*weight[j][0];
+                    }
+                }
+                //System.out.println("output akhir["+i+"]: "+output[i]);
+                //hitung error akhir
+                error[i] = target[i]-output[i];
+            
+            }
+            //hitung total error
+            double sumerror = 0.0;
+            for(int i=0; i<num_instance;i++)
+            {
+                sumerror += Math.pow(error[i], 2);
+            }
+            if(0.5*sumerror < threshold)
+                stop = true;
+            System.out.println("Total error: "+0.5*sumerror);
+            iterator++;
+        }
+    }
     
+        public static void main(String[] args){
+        int num_instance = 3;
+        int num_input = 3;
+        int max_epoch = 10;
+        double LR = 0.1;
+        double threshold = 0.01;
+        double[][] input = new double[num_instance][num_input+1];
+        double[] target = new double[num_instance];
+        double[] error = new double[num_instance];
+        double[] output = new double[num_instance];
+        double[][] weight = new double[num_input+1][1];
+        input[0][0] = 1.0;
+        input[0][1] = 1.0;
+        input[0][2] = 0.0;
+        input[0][3] = 1.0;
+        input[1][0] = 1.0;
+        input[1][1] = 0.0;
+        input[1][2] = -1.0;
+        input[1][3] = -1.0;
+        input[2][0] = 1.0;
+        input[2][1] = -1.0;
+        input[2][2] = -0.5;
+        input[2][3] = -1.0;
+        target[0]  = -1;
+        target[1]  = 1;
+        target[2]  = 1;
+        weight[0][0] = 0.0;
+        weight[1][0] = 0.0;
+        weight[2][0] = 0.0;
+        weight[3][0] = 0.0;
+
+        SinglePTR lala = new SinglePTR(input.length, num_input, max_epoch, LR, threshold,
+                      input, target, 2, false);
+        
+    }
 }

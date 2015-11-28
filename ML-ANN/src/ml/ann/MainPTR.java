@@ -10,6 +10,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
 import weka.core.Instances;
+import weka.filters.Filter;
+import weka.filters.supervised.attribute.NominalToBinary;
 
 /**
  *
@@ -17,22 +19,37 @@ import weka.core.Instances;
  */
 public class MainPTR {
     
-    public static void main(String[] args) throws FileNotFoundException, IOException{
+    public static NominalToBinary m_nominalToBinaryFilter;
+    
+    public static void main(String[] args) throws FileNotFoundException, IOException, Exception{
+        m_nominalToBinaryFilter = new NominalToBinary();
         Scanner in = new Scanner(System.in);
         System.out.println("Lokasi file: ");
         String filepath = in.nextLine();
+        System.out.println("--- Algoritma ---");
+        System.out.println("1. Perceptron Training Rule");
+        System.out.println("2. Delta Rule Gradient");;
+        System.out.println("3. Delta Batch Rule");
+        System.out.println("Pilihan Algoritma (1/2/3) : ");
+        int choice = in.nextInt();
+        
         
         FileReader trainreader = new FileReader(filepath);
         Instances train = new Instances(trainreader);
         train.setClassIndex(train.numAttributes()-1);
         
+        m_nominalToBinaryFilter.setInputFormat(train);
+       train = Filter.useFilter(train,m_nominalToBinaryFilter);
+        
         double[][] input;
         input = new double[train.numInstances()][train.numAttributes()];
         for(int i=0; i<train.numInstances(); i++)
         {
-            for(int j = 0; j<train.numAttributes()-1; j++)
+            for(int j = 1; j < train.numAttributes(); j++)
             {
-                input[i][j+1] = train.instance(i).value(j);
+                System.out.println(train.attribute(j-1));
+                input[i][j] = train.instance(i).value(j-1);
+                System.out.println("input["+i+"]["+j+"]: "+ input[i][j]);
             }
         }
         
@@ -50,10 +67,22 @@ public class MainPTR {
 //            System.out.println("Target "+i+": "+target[i]);
 //        }
         
-        SinglePTR testrun;
-        testrun = new SinglePTR(train.numInstances(), train.numAttributes(), 10, 0.1, 0.01, input, target, true);
-        
-        testrun.buildclassifier();
+       
+        if(choice == 1)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, 1, true);
+        }
+        else if(choice == 2)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, 2, true);
+        }
+        else if(choice == 3)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, 3, true);
+        }
         
 //        for(int it = 0; it<train.numInstances(); it++)
 //        {

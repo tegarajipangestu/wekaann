@@ -1,1 +1,0 @@
-/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/weather.numeric.arff

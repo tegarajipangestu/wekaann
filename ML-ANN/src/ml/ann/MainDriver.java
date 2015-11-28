@@ -203,7 +203,7 @@ public class MainDriver {
 		case 2:
 		    break;
 		case 3:
-                    model = new BackPropagation(10,1,false,false);
+                    model = new BackPropagation(10,1,false,false,1);
 		    break;
 	  }
 
