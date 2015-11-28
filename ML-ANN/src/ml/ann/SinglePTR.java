@@ -22,6 +22,7 @@ public class SinglePTR {
 	public double[][] input; //data masukan
 	public double[] target; //target sebanyak instance_input
 
+    public double momentum;
 	public double[][] weight;//menyimpan nilai weight X ke Y (misal: input1 ke neuron1)
 	//dalam kasus singlePTR, pasti selalu [input][neuron]
 	//untuk sekarang 1dimensi karena output selalu 1 neuron
@@ -32,16 +33,18 @@ public class SinglePTR {
 	public int actFunc = 0;
 	Scanner funcScan;
 
-	public SinglePTR(int num_instance, int num_input, int max_epoch, double LR, double threshold,
-		double[][] input, double[] target, double[][] weight, int algo, boolean isRandomWeight) {
-		this.num_instance = num_instance;
-		this.num_input = num_input;
-		this.max_epoch = max_epoch;
-		this.learning_rate = LR;
-		this.target = new double[num_instance];
-		this.target = target;
-		this.threshold = threshold;
-		this.input = new double[num_instance][num_input + 1];
+	 public SinglePTR (int num_instance, int num_input, int max_epoch, double LR, double threshold,
+                      double[][]input, double[] target, double[][] weight, int algo, double momentum, boolean isRandomWeight)
+    {
+        this.num_instance = num_instance;
+        this.num_input = num_input;
+        this.max_epoch = max_epoch;
+        this.learning_rate= LR;
+        this.target = new double[num_instance];
+        this.target = target;
+        this.momentum = momentum;
+        this.threshold = threshold;
+        this.input = new double[num_instance][num_input+1];
 		//this.input = input.clone();
 		this.input = input;
 
@@ -111,7 +114,7 @@ public class SinglePTR {
 			//hitung deltaWeight0 - deltaWeightN
 			for (int i = 0; i < num_instance; i++) {
 				for (int j = 0; j <= num_input; j++) {
-					deltaweight[i][j] = learning_rate * input[i][j] * errorawal[i];
+                    deltaweight[i][j] = learning_rate*(1-momentum)*input[i][j]*errorawal[i]+(momentum*deltaweight[i][j]);
 					//System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
 				}
 			}
@@ -218,8 +221,8 @@ public class SinglePTR {
 
 				//hitung deltaWeight dan setNewWeight
 				for (int j = 0; j <= num_input; j++) {
-					deltaweight[j] = learning_rate * error[i] * input[i][j];
-					weight[j][0] = weight[j][0] + deltaweight[j];
+                    deltaweight[j] = learning_rate*(1-momentum)*error[i]*input[i][j]+(momentum*deltaweight[j]);
+                    weight[j][0] = weight[j][0]+deltaweight[j];
 					//System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
 				}
 			}
@@ -281,6 +284,7 @@ public class SinglePTR {
 		num_instance = 6;
 		num_input = 5;
 		
+		double momen = 0;
 		
 		double[][] input = new double[num_instance][num_input + 1];
 		double[] target = new double[num_instance];
@@ -361,7 +365,7 @@ public class SinglePTR {
 		
 		
 		SinglePTR lala = new SinglePTR(input.length, num_input, max_epoch, LR, threshold,
-			input, target, weight, 1, false);
+			input, target, weight, 1, momen, false);
 
 	}
 }

@@ -22,12 +22,13 @@ public class MultiClassPTR {
 	public int max_epoch;
 	public double learning_rate;
 	public double threshold;
+	public double momentum;
 
 	public int actFunc = 0;
 	Scanner funcScan = new Scanner(System.in);
 
 	public MultiClassPTR(int num_instance, int num_input, int num_output, double[][] input, double[][] weight,
-		double[][] target, int max_epoch, double learning_rate, double threshold, int algo, boolean isRandomWeight) {
+		double[][] target, int max_epoch, double learning_rate, double threshold, int algo, double momentum, boolean isRandomWeight) {
 		this.num_instance = num_instance;
 		this.num_input = num_input;
 		this.num_output = num_output;
@@ -35,6 +36,7 @@ public class MultiClassPTR {
 		this.input = input;
 		weight = new double[num_input + 1][num_output];
 		this.weight = weight;
+		this.momentum = momentum;
 		this.target = target;
 		this.max_epoch = max_epoch;
 		this.learning_rate = learning_rate;
@@ -106,7 +108,7 @@ public class MultiClassPTR {
 
 					//hitung deltaWeight dan setNewWeight
 					for (int j = 0; j <= num_input; j++) {
-						deltaweight[j][out] = learning_rate * error[i][out] * input[i][j];
+						deltaweight[j][out] = learning_rate * (1 - momentum) * error[i][out] * input[i][j] + (momentum * deltaweight[j][out]);
 						weight[j][out] = weight[j][out] + deltaweight[j][out];
 						//System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
 					}
@@ -119,10 +121,10 @@ public class MultiClassPTR {
 						for (int j = 0; j <= num_input; j++) {
 							output[i][out] += input[i][j] * weight[j][out];
 						}
-						System.out.print("output[" + i + "][" + out + "]" + output[i][out] + " | ");
+//						System.out.print("output[" + i + "][" + out + "]" + output[i][out] + " | ");
 						output[i][out] = this.actFunction(output[i][out]);
-						System.out.println("output[" + i + "][" + out + "]" + output[i][out]);
-						
+//						System.out.println("output[" + i + "][" + out + "]" + output[i][out]);
+
 					} else if (algo == 2) {
 						output[i][out] = 0.0;
 						for (int j = 0; j <= num_input; j++) {
@@ -175,9 +177,7 @@ public class MultiClassPTR {
 						outputawal[i][out] += input[i][j] * weight[j][out];
 					}
 
-					System.out.print("output[" + i + "][" + out + "]" + outputawal[i][out] + " | ");
 					outputawal[i][out] = this.actFunction(outputawal[i][out]);
-					System.out.println("output[" + i + "][" + out + "]" + outputawal[i][out]);
 					//System.out.println("outputawal["+i+"]: "+outputawal[i]);
 					errorawal[i][out] = target[i][out] - outputawal[i][out];
 					//System.out.println("errorawal["+i+"]: "+errorawal[i]);
@@ -186,7 +186,8 @@ public class MultiClassPTR {
 				//hitung deltaWeight0 - deltaWeightN
 				for (int i = 0; i < num_instance; i++) {
 					for (int j = 0; j <= num_input; j++) {
-						deltaweight[i][j] = learning_rate * input[i][j] * errorawal[i][out];
+						deltaweight[i][j] = learning_rate * (1 - momentum) * input[i][j] * errorawal[i][out] + (momentum * deltaweight[i][j]);
+
 						//System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
 					}
 				}
@@ -236,9 +237,9 @@ public class MultiClassPTR {
 			for (int i = 0; i < input.length; i++) {
 				output[out] += input[i] * weight[i][0];
 			}
-			System.out.print(output[out] + " | ");
+//			System.out.print(output[out] + " | ");
 			output[out] = this.actFunction(output[out]);
-			System.out.println(output[out]);
+//			System.out.println(output[out]);
 		}
 
 		int out = 0;
@@ -284,8 +285,8 @@ public class MultiClassPTR {
 		weight[1][0] = 0.0;
 		weight[2][0] = 0.0;
 		weight[3][0] = 0.0;
-
-		MultiClassPTR lala = new MultiClassPTR(num_instance, num_input, num_output, input, weight, target, max_epoch, LR, threshold, 1, false);
+		double momen = 0.1;
+		MultiClassPTR lala = new MultiClassPTR(num_instance, num_input, num_output, input, weight, target, max_epoch, LR, threshold, 1, momen, false);
 
 	}
 
@@ -297,7 +298,6 @@ public class MultiClassPTR {
 				return 0;
 			}
 		} else if (actFunc == 2) {
-			System.out.println("true");
 			if (input >= 0) {
 				return 1;
 			} else {

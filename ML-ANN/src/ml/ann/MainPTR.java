@@ -26,6 +26,7 @@ public class MainPTR {
 		double weightawal = 0.0;
 		double learningRate = 0.1;
 		double threshold = 0.01;
+		double momentum = 0.0;
 		int maxEpoch = 10;
 
 		m_nominalToBinaryFilter = new NominalToBinary();
@@ -45,6 +46,9 @@ public class MainPTR {
 		System.out.println("Apakah Anda ingin memasukkan nilai weight awal? (YES/NO)");
 		String isRandom = in.nextLine();
 
+		System.out.println("Apakah Anda ingin memasukkan konfigurasi? (YES/NO)");
+		int config = in.nextInt();
+		
 		if (isRandom.equals("YES")) {
 			randomWeight = false;
 		} else {
@@ -66,6 +70,7 @@ public class MainPTR {
 		System.out.print("L.rate " + learningRate + " | ");
 		System.out.print("Max Epoch " + maxEpoch + " | ");
 		System.out.print("Threshold " + threshold + " | ");
+		System.out.print("Momentum " + momentum + " | ");
 		System.out.println();
 
 		FileReader trainreader = new FileReader(filepath);
@@ -98,16 +103,9 @@ public class MainPTR {
 				System.out.println("target[" + i + "]: " + target[i]);
 			}
 
-			if (choice == 1) {
 				SinglePTR testrun;
-				testrun = new SinglePTR(train.numInstances(), train.numAttributes() - 1, maxEpoch, learningRate, threshold, input, target, weight, 1, randomWeight);
-			} else if (choice == 2) {
-				SinglePTR testrun;
-				testrun = new SinglePTR(train.numInstances(), train.numAttributes() - 1, maxEpoch, learningRate, threshold, input, target, weight, 2, randomWeight);
-			} else if (choice == 3) {
-				SinglePTR testrun;
-				testrun = new SinglePTR(train.numInstances(), train.numAttributes() - 1, maxEpoch, learningRate, threshold, input, target, weight, 3, randomWeight);
-			}
+				testrun = new SinglePTR(train.numInstances(), train.numAttributes() - 1, maxEpoch, learningRate, threshold, input, target, weight, 3, momentum, randomWeight);
+				
 		} else {
 			//init weight for multiclass
 			System.out.println(train.numClasses());
@@ -123,7 +121,7 @@ public class MainPTR {
 			}
 			
 				MultiClassPTR testrun;
-				testrun = new MultiClassPTR(train.numInstances(), train.numAttributes() - 1, train.get(1).numClasses(), input, weight, target, maxEpoch, learningRate, threshold, choice, randomWeight);
+				testrun = new MultiClassPTR(train.numInstances(), train.numAttributes() - 1, train.get(1).numClasses(), input, weight, target, maxEpoch, learningRate, threshold, choice, momentum, randomWeight);
 				
 				double[] testClassify;
 				testClassify = new double[train.numAttributes() - 1];
