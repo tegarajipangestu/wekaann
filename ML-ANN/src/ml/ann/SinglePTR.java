@@ -111,7 +111,7 @@ public class SinglePTR {
             {
                 for(int j=0; j<=num_input;j++)
                 {
-                    deltaweight[i][j] = learning_rate*momentum*input[i][j]*errorawal[i];
+                    deltaweight[i][j] = learning_rate*(1-momentum)*input[i][j]*errorawal[i]+(momentum*deltaweight[i][j]);
                     //System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
                 }
             }
@@ -206,7 +206,7 @@ public class SinglePTR {
                 //hitung deltaWeight dan setNewWeight
                 for(int j=0; j<=num_input; j++)
                 {
-                    deltaweight[j] = learning_rate*momentum*error[i]*input[i][j];
+                    deltaweight[j] = learning_rate*(1-momentum)*error[i]*input[i][j]+(momentum*deltaweight[j]);
                     weight[j][0] = weight[j][0]+deltaweight[j];
                     //System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
                 }

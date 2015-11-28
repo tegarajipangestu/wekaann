@@ -106,7 +106,7 @@ public class MultiClassPTR {
                     //hitung deltaWeight dan setNewWeight
                     for(int j=0; j<=num_input; j++)
                     {
-                        deltaweight[j][out] = learning_rate*momentum*error[i][out]*input[i][j];
+                        deltaweight[j][out] = learning_rate*(1-momentum)*error[i][out]*input[i][j]+(momentum*deltaweight[j][out]);
                         weight[j][out] = weight[j][out]+deltaweight[j][out];
                         //System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
                     }
@@ -194,7 +194,7 @@ public class MultiClassPTR {
                 {
                     for(int j=0; j<=num_input;j++)
                     {
-                        deltaweight[i][j] = learning_rate*momentum*input[i][j]*errorawal[i][out];
+                        deltaweight[i][j] = learning_rate*(1-momentum)*input[i][j]*errorawal[i][out]+(momentum*deltaweight[i][j]);
                         //System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
                     }
                 }
