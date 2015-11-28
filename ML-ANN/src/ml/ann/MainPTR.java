@@ -27,10 +27,12 @@ public class MainPTR {
         m_nominalToBinaryFilter = new NominalToBinary();
         Scanner in = new Scanner(System.in);
         System.out.println("Lokasi file: ");
+	  
         String filepath = in.nextLine();
+	  filepath = "C:\\Users\\SPM\\git\\wkn2\\wekaann\\ML-ANN\\test-arffs\\iris.2D.arff";
         System.out.println("--- Algoritma ---");
         System.out.println("1. Perceptron Training Rule");
-        System.out.println("2. Delta Rule Gradient");;
+        System.out.println("2. Delta Rule Gradient");
         System.out.println("3. Delta Batch Rule");
         System.out.println("Pilihan Algoritma (1/2/3) : ");
         int choice = in.nextInt();
