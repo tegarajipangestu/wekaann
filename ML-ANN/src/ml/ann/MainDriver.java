@@ -20,6 +20,8 @@ import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
+import weka.filters.Filter;
+import weka.filters.supervised.attribute.NominalToBinary;
 
 public class MainDriver {
 
@@ -32,7 +34,7 @@ public class MainDriver {
     public static Instances test;
     public static boolean cv10 = false;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 	  // TODO code application logic here
 	  Scanner input = new Scanner(System.in);
 	  System.out.print("Input complete file location: ");
@@ -186,7 +188,7 @@ public class MainDriver {
 	  //return C;
     }
 
-    public static void buildClassifier() {
+    public static void buildClassifier() throws Exception {
 	  Scanner in = new Scanner(System.in);
 	  int learningType, split, classifierType;
 	  String[] options = new String[1];
@@ -205,7 +207,7 @@ public class MainDriver {
 		    break;
 		case 3:
 //                    model = new MultilayerPerceptron();
-                    model = new BackPropagation(5,1,false,true,0.25,2,10);
+                    model = new BackPropagation(1000000,1,false,true,0.5,4,0.5);
 		    break;
 	  }
 
@@ -240,7 +242,6 @@ public class MainDriver {
 		cv10 = true;
 		train = new Instances(data);
 		test = new Instances(data);
-
 	  }
     }
 
