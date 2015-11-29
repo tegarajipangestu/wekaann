@@ -421,8 +421,49 @@ public class SinglePTR implements Classifier {
     
 
     @Override
-    public void buildClassifier(Instances i) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void buildClassifier(Instances train) throws Exception {
+        double[][] input;
+        double weightawal = 0.0;
+        input = new double[train.numInstances()][train.numAttributes()];
+        for(int i=0; i<train.numInstances(); i++)
+        {
+            for(int j = 1; j < train.numAttributes(); j++)
+            {
+                System.out.println(train.attribute(j-1));
+                input[i][j] = train.instance(i).value(j-1);
+                System.out.println("input["+i+"]["+j+"]: "+ input[i][j]);
+            }
+        }
+        
+        double[] target = new double[train.numInstances()];
+        
+        for(int i=0; i<train.numInstances(); i++)
+        {
+            target[i] = train.instance(i).classValue();
+            System.out.println("target["+i+"]: "+ target[i]);
+        }
+        
+        double[][] weight = new double[train.numAttributes()][1];
+        for(int i=0; i<train.numAttributes(); i++)
+        {
+            weight[i][0] = weightawal;
+        }
+        
+        if(algo == 1)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, weight, 1, momentum, randomWeight);
+        }
+        else if(algo == 2)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, weight, 2, momentum, randomWeight);
+        }
+        else if(algo == 3)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, weight, 3, momentum, randomWeight);
+        }
     }
         
 }

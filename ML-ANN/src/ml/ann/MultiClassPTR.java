@@ -6,12 +6,16 @@
 package ml.ann;
 
 import java.util.Scanner;
+import weka.classifiers.Classifier;
+import weka.core.Capabilities;
+import weka.core.Instance;
+import weka.core.Instances;
 
 /**
  *
  * @author Ivana Clairine
  */
-public class MultiClassPTR {
+public class MultiClassPTR implements Classifier {
 
 	public int num_instance; //jumlah instance
 	public int num_input; //jumlah node input, belum termasuk bias
@@ -23,9 +27,19 @@ public class MultiClassPTR {
 	public double learning_rate;
 	public double threshold;
 	public double momentum;
+        public int algo;
+        public boolean randomWeight;
 
 	public int actFunc = 0;
 	Scanner funcScan = new Scanner(System.in);
+        
+        public MultiClassPTR(int algo, boolean randomWeight, double learning_rate, int max_epoch, double error_thres){
+            this.algo = algo;
+            this.randomWeight = randomWeight;
+            this.learning_rate = learning_rate;
+            this.max_epoch = max_epoch;
+            this.threshold = error_thres;
+        }
 
 	public MultiClassPTR(int num_instance, int num_input, int num_output, double[][] input, double[][] weight,
 		double[][] target, int max_epoch, double learning_rate, double threshold, int algo, double momentum, boolean isRandomWeight) {
@@ -49,6 +63,29 @@ public class MultiClassPTR {
 			buildClassifierBatch(isRandomWeight);
 		}
 	}
+        
+        public void setAttribute(int num_instance, int num_input, int num_output, double[][] input, double[][] weight,
+		double[][] target, int max_epoch, double learning_rate, double threshold, int algo, double momentum, boolean isRandomWeight){
+            this.num_instance = num_instance;
+		this.num_input = num_input;
+		this.num_output = num_output;
+		this.input = new double[num_instance][num_input + 1];
+		this.input = input;
+		weight = new double[num_input + 1][num_output];
+		this.weight = weight;
+		this.momentum = momentum;
+		this.target = target;
+		this.max_epoch = max_epoch;
+		this.learning_rate = learning_rate;
+		this.threshold = threshold;
+		if (algo == 1) {
+			buildClassifier(1, isRandomWeight);
+		} else if (algo == 2) {
+			buildClassifier(2, isRandomWeight);
+		} else if (algo == 3) {
+			buildClassifierBatch(isRandomWeight);
+		}
+        }
 
 	public void setWeight() {
 		double rangeMin = 0.0;
@@ -89,7 +126,7 @@ public class MultiClassPTR {
 					{
 						output[i][out] = 0.0;
 						for (int j = 0; j <= num_input; j++) {
-							output[i][out] += input[i][j] * weight[j][0];
+							output[i][out] += input[i][j] * weight[j][out];
 						}
 						System.out.print("output[" + i + "][" + out + "]" + output[i][out] + " | ");
 						output[i][out] = this.actFunction(output[i][out]);
@@ -141,6 +178,7 @@ public class MultiClassPTR {
 				for (int i = 0; i < num_instance; i++) {
 					sumerror += Math.pow(error[i][out], 2);
 				}
+                                System.out.println("sumerror: " + sumerror);
 				if (0.5 * sumerror < threshold) {
 					stop = true;
 				}
@@ -312,5 +350,56 @@ public class MultiClassPTR {
 			return input;
 		}
 	}
+
+    @Override
+    public void buildClassifier(Instances train) throws Exception {
+        double weightawal = 0.0;
+        double[][] input;
+        double[][] target;
+        target = new double[train.numInstances()][train.numClasses()];
+        input = new double[train.numInstances()][train.numAttributes()];
+        for (int i = 0; i < train.numInstances(); i++) {
+            for (int j = 1; j < train.numAttributes(); j++) {
+                input[i][j] = train.instance(i).value(j - 1);
+                System.out.println("input[" + i + "][" + j + "]: " + input[i][j]);
+            }
+        }
+        double[][] weight = new double[train.numAttributes()][1];
+        for (int i = 0; i < train.numAttributes(); i++) {
+            weight[i][0] = weightawal;
+        }
+        
+        
+        for(int i=0; i<train.numInstances(); i++)
+        {
+            for(int j=0; j<train.numClasses(); j++)
+            {
+                target[i][j] = train.get(i).classValue();
+                System.out.println("target["+i+"]["+j+"]: "+target[i][j]);
+            }
+        }
+
+        setAttribute(train.numInstances(), train.numAttributes() - 1, train.get(1).numClasses(), input, weight, target, max_epoch, learning_rate, threshold, algo, momentum, randomWeight);
+    }//To change body of generated methods, choose Tools | Templates.
+
+    @Override
+    public double classifyInstance(Instance instnc) throws Exception {
+        double[] input = new double[instnc.numAttributes()];
+        for(int i = 0; i<instnc.numAttributes(); i++)
+        {
+            input[i] = instnc.value(i);
+        }
+        return classifyInstance(input);
+    }
+
+    @Override
+    public double[] distributionForInstance(Instance instnc) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Capabilities getCapabilities() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
 }
