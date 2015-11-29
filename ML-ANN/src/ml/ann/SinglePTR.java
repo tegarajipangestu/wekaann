@@ -5,12 +5,19 @@
  */
 package ml.ann;
 
+import static ml.ann.MainPTR.m_nominalToBinaryFilter;
+import weka.classifiers.Classifier;
+import weka.core.Capabilities;
+import weka.core.Instance;
+import weka.core.Instances;
+import weka.filters.supervised.attribute.NominalToBinary;
+
 
 /**
  *
  * @author Ivana Clairine
  */
-public class SinglePTR {
+public class SinglePTR implements Classifier {
     public int num_instance;
     //public int instance_input; //ada berapa banyak masukan yang akan digunakan
     public int num_input; //jumlah node input
@@ -27,7 +34,37 @@ public class SinglePTR {
     
     public double[] output;
     public double[] error;
+    public int algo;
+    public boolean randomWeight;
     
+    public SinglePTR(int algo, boolean randomWeight){
+        this.algo = algo;
+        this.randomWeight = randomWeight;
+    }
+    
+    public void setAttribute (int num_instance, int num_input, int max_epoch, double LR, double threshold,
+                      double[][]input, double[] target, double[][] weight, int algo, double momentum, boolean isRandomWeight){
+        this.num_instance = num_instance;
+        this.num_input = num_input;
+        this.max_epoch = max_epoch;
+        this.learning_rate= LR;
+        this.target = new double[num_instance];
+        this.target = target;
+        this.momentum = momentum;
+        this.threshold = threshold;
+        this.input = new double[num_instance][num_input+1];
+        //this.input = input.clone();
+        this.input = input;
+       
+        this.weight = new double[num_input+1][1];
+        this.weight = weight;
+        
+        for(int i=0; i<num_instance; i++)
+        {
+            input[i][0] = 1.0;
+        }        
+        
+    }
     
     public SinglePTR (int num_instance, int num_input, int max_epoch, double LR, double threshold,
                       double[][]input, double[] target, double[][] weight, int algo, double momentum, boolean isRandomWeight)
@@ -53,9 +90,9 @@ public class SinglePTR {
         }
         
         if(algo == 1)
-            this.buildClassifier(1, isRandomWeight);
+            this.buildClassifierNew(1, isRandomWeight);
         else if (algo == 2)
-            this.buildClassifier(2, isRandomWeight);
+            this.buildClassifierNew(2, isRandomWeight);
         else if (algo == 3)
         {
             this.buildClassifierBatch(isRandomWeight);
@@ -160,7 +197,7 @@ public class SinglePTR {
         }
     }
     
-    public void buildClassifier(int algo, boolean randomWeight){
+    public void buildClassifierNew(int algo, boolean randomWeight){
         double[] output = new double[num_instance];
         double[] error = new double[num_instance];
         double[] deltaweight = new double [num_input+1];
@@ -255,7 +292,7 @@ public class SinglePTR {
         }
     }
     
-    public double classifyInstance(double[] input){
+    public double classifyInstanceNew(double[] input){
         double output = 0.0;
         for(int i=0; i<input.length; i++)
         {
@@ -299,4 +336,66 @@ public class SinglePTR {
 //                      input, target, 2, false);
 //        
 //    }
+
+    @Override
+    public void buildClassifier(Instances train) throws Exception {
+        double[][] input;
+        double weightawal = 0.0;
+        input = new double[train.numInstances()][train.numAttributes()];
+        for(int i=0; i<train.numInstances(); i++)
+        {
+            for(int j = 1; j < train.numAttributes(); j++)
+            {
+                System.out.println(train.attribute(j-1));
+                input[i][j] = train.instance(i).value(j-1);
+                System.out.println("input["+i+"]["+j+"]: "+ input[i][j]);
+            }
+        }
+        
+        double[] target = new double[train.numInstances()];
+        
+        for(int i=0; i<train.numInstances(); i++)
+        {
+            target[i] = train.instance(i).classValue();
+            System.out.println("target["+i+"]: "+ target[i]);
+        }
+        
+        double[][] weight = new double[train.numAttributes()][1];
+        for(int i=0; i<train.numAttributes(); i++)
+        {
+            weight[i][0] = weightawal;
+        }
+        
+        if(algo == 1)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, weight, 1, momentum, randomWeight);
+        }
+        else if(algo == 2)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, weight, 2, momentum, randomWeight);
+        }
+        else if(algo == 3)
+        {
+            SinglePTR testrun;
+            testrun = new SinglePTR(train.numInstances(), train.numAttributes()-1, 10, 0.1, 0.01, input, target, weight, 3, momentum, randomWeight);
+        }
+    }
+
+    @Override
+    public double classifyInstance(Instance instnc) throws Exception {
+        m_nominalToBinaryFilter = new NominalToBinary();//To change body of generated methods, choose Tools | Templates.
+        return 0;
+    }
+
+    @Override
+    public double[] distributionForInstance(Instance instnc) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Capabilities getCapabilities() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
