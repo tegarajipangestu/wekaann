@@ -206,8 +206,8 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
 
     public void initNetwork() {
         Random random = new Random();
-        double defaultWeightValue = 0;
-//        double defaultWeightValue = random.nextDouble() - 0.5;
+//        double defaultWeightValue = 0;
+        double defaultWeightValue = random.nextDouble() - 0.5;
         int firstLayerIdx = 0;
         int lastLayerIdx = neuronTopology.numLayers - 1;
         for (int i = 0; i < neuronTopology.numLayers; i++) {
@@ -223,7 +223,7 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
             if (i != lastLayerIdx) {
                 for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
                     for (int k = 0; k < neuronTopology.numNeuronEachLayer[i + 1]; k++) {
-                        neuronTopology.weight[i][j][k] = defaultWeightValue;
+                        neuronTopology.weight[i][j][k] = 0;
                         neuronTopology.previousDeltaWeight[i][j][k] = 0;
                         neuronTopology.deltaWeight[i][j][k] = 0;
                     }
@@ -262,6 +262,7 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
 
     @Override
     public void buildClassifier(Instances data) throws Exception {
+        double epochError = 0;
         neuronTopology.originInstances = data;
         neuronTopology.instances = new Instances(data);
         neuronTopology.instances.deleteWithMissingClass();
@@ -304,7 +305,7 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         initNetwork();
 
         for (int epoch = 0; epoch < neuronTopology.epoch; epoch++) {
-            double epochError = 0;
+            epochError = 0;
             int idxLastLayer = neuronTopology.numLayers - 1;
             for (int inst = 0; inst < neuronTopology.instances.numInstances(); inst++) {
 
@@ -321,19 +322,29 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
                 for (int layer = idxLastLayer; layer > 0; layer--) {
                     for (int neu = 0; neu < neuronTopology.numNeuronEachLayer[layer]; neu++) {
                         neuronTopology.error[layer][neu] = computeError(layer, neu);
-                        System.out.println("neuronTopology.error[" + layer + "][" + neu + "] = " + neuronTopology.error[layer][neu]);
                         for (int preneu = 0; preneu < neuronTopology.numNeuronEachLayer[layer - 1]; preneu++) {
                             neuronTopology.weight[layer - 1][preneu][neu] = updateWeight(layer - 1, preneu, neu);
                         }
                     }
                 }
                 for (int i = 0; i < neuronTopology.numNeuronEachLayer[idxLastLayer]; i++) {
+//                    if (Utils.maxIndex(neuronTopology.output[idxLastLayer]) == Utils.maxIndex(neuronTopology.target)) {
+//                        epochError = 0;
+//                    } else {
+//                        epochError += computeMSE(neuronTopology.target[i], neuronTopology.output[idxLastLayer][i]);
+//                    }
                     epochError += computeMSE(neuronTopology.target[i], neuronTopology.output[idxLastLayer][i]);
                 }
-                System.out.println("AfterLearning");
-                printStatistic();
+
+//                System.out.println("AfterLearning");
+//                printStatistic();
+            }
+            if (epochError <= neuronTopology.terminateMSE) {
+                System.out.println("Terminate karena mse cuk");
+                break;
             }
         }
+//        System.out.println("Epoch error = " + epochError);
     }
 
     private double computeMSE(double target, double output) {
@@ -346,9 +357,6 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         double currentOutput = neuronTopology.output[idxLayer][idxNeuron];
         double maudyAyunda = 0;
         if (idxLayer == lastLayerIdx) {
-            System.out.println("currentOutput * (1 - currentOutput) * (neuronTopology.target[idxNeuron] - currentOutput)");
-            System.out.println(currentOutput + " * (1 - " + currentOutput + ") * " + neuronTopology.target[idxNeuron] + " - " + currentOutput);
-            System.out.println(currentOutput * (1 - currentOutput) * (neuronTopology.target[idxNeuron] - currentOutput));
             return currentOutput * (1 - currentOutput) * (neuronTopology.target[idxNeuron] - currentOutput);
         } else if (idxLayer != firstLayerIdx) {
             for (int i = 0; i < neuronTopology.numNeuronEachLayer[idxLayer + 1]; i++) {
@@ -369,17 +377,12 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         int idxNextLayer = idxLayer + 1;
 
         if (idxLayer + 1 == lastLayerIdx) {
-            System.out.println("idxlayer = " + idxLayer);
-            System.out.println("idxcurrent = " + idxCurrentNeuron);
-            System.out.println("idxnext = " + idxNextLayer);
-            System.out.println("neuronTopology.previousDeltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron] = " + neuronTopology.previousDeltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron]);
             neuronTopology.previousDeltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron]
                     = neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron];
             neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron] = (neuronTopology.learningRate
                     * neuronTopology.error[idxLayer + 1][idxNextNeuron]
                     * neuronTopology.output[idxLayer][idxCurrentNeuron])
                     + computeMomentumCuk(idxLayer, idxCurrentNeuron, idxNextNeuron);
-            System.out.println("neuronTopology.error[" + (idxLayer + 1) + "][" + idxNextNeuron + "] = " + neuronTopology.error[idxLayer + 1][idxNextNeuron]);
             return neuronTopology.weight[idxLayer - 1][idxCurrentNeuron][idxNextNeuron]
                     + neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron];
 //        } 
@@ -395,7 +398,7 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
                     * neuronTopology.error[idxLayer + 1][idxNextNeuron]
                     * neuronTopology.output[idxLayer][idxCurrentNeuron])
                     + computeMomentumCuk(idxLayer, idxCurrentNeuron, idxNextNeuron);
-            System.out.println("neuronTopology.error[" + (idxLayer + 1) + "][" + idxNextNeuron + "] = " + neuronTopology.error[idxLayer + 1][idxNextNeuron]);
+//            System.out.println("neuronTopology.error[" + (idxLayer + 1) + "][" + idxNextNeuron + "] = " + neuronTopology.error[idxLayer + 1][idxNextNeuron]);
             return neuronTopology.weight[idxLayer][idxCurrentNeuron][idxNextNeuron]
                     + neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron];
         }
@@ -455,15 +458,16 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
                     if ("TRUE".equals(instance.stringValue(i))) {
                         neuronTopology.input[0 + offset] = 1;
                         neuronTopology.output[0][0 + offset] = 1;
+                        offset++;
                     } else if ("FALSE".equals(instance.stringValue(i))) {
-                        neuronTopology.input[1 + offset] = 1;
-                        neuronTopology.output[0][1 + offset] = 1;
+                        neuronTopology.input[offset] = 1;
+                        neuronTopology.output[0][offset] = 0;
+                        offset++;
                     } else {
                         neuronTopology.input[instance.attribute(i).index() + offset] = 1;
                         neuronTopology.output[0][instance.attribute(i).index() + offset] = 1;
-
+                        offset += instance.attribute(i).numValues();
                     }
-                    offset += instance.attribute(i).numValues();
                 } else if (instance.attribute(i).isNumeric()) {
                     neuronTopology.input[offset] = instance.value(i);
                     neuronTopology.output[0][offset] = instance.value(i);
@@ -473,6 +477,7 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
 //        System.out.println(neuronTopology.originInstances.instance(instancesIdx).toString());
 //            printInput();
         } catch (Exception e) {
+            System.err.println(neuronTopology.input.length);
             System.err.println(instance.toString());
             System.err.println("offset = " + offset);
             e.printStackTrace();
@@ -589,8 +594,6 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
 
         // Make a copy of the instance so that it isn't modified
         currentInstance = (Instance) instance.copy();
-        System.out.println(instance.toString());
-        System.out.println(instance.numAttributes());
         initInputAndTarget(currentInstance);
 
         for (int noa = 0; noa < currentInstance.numAttributes(); noa++) {
@@ -631,7 +634,11 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         for (int noa = 0; noa < neuronTopology.numClasses; noa++) {
             jancuk[noa] /= count;
         }
-        System.out.println(jancuk);
+//        System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Jancuk~~~~~~~~~~~~~~~~~~~~~~~~~");
+//        for (int i = 0; i < jancuk.length; i++) {
+//            System.out.print(jancuk[i] + " ");
+//        }
+//        System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Jancuk~~~~~~~~~~~~~~~~~~~~~~~~~");
         return jancuk;
     }
 

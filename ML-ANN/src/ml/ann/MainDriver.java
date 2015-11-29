@@ -14,14 +14,10 @@ import java.util.Random;
 import java.util.Scanner;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
-import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.functions.MultilayerPerceptron;
-import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
-import weka.filters.Filter;
-import weka.filters.supervised.attribute.NominalToBinary;
 
 public class MainDriver {
 
@@ -39,7 +35,7 @@ public class MainDriver {
 	  Scanner input = new Scanner(System.in);
 	  System.out.print("Input complete file location: ");
 	  String fileLocation = input.nextLine();
-          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/iris.arff";
+          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/weather.nominal.arff";
           
 //          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/iris.arff";
 
@@ -207,7 +203,7 @@ public class MainDriver {
 		    break;
 		case 3:
 //                    model = new MultilayerPerceptron();
-                    model = new BackPropagation(2,1,false,true,0.5,1,0.3);
+                    model = new BackPropagation(1000,1,false,true,0.5,4,0.5);
 		    break;
 	  }
 
