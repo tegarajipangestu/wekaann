@@ -39,7 +39,7 @@ public class MainDriver {
 	  Scanner input = new Scanner(System.in);
 	  System.out.print("Input complete file location: ");
 	  String fileLocation = input.nextLine();
-          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/weather.numeric.arff";
+          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/iris.arff";
           
 //          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/iris.arff";
 
@@ -207,7 +207,7 @@ public class MainDriver {
 		    break;
 		case 3:
 //                    model = new MultilayerPerceptron();
-                    model = new BackPropagation(1000000,1,false,true,0.5,4,0.5);
+                    model = new BackPropagation(2,1,false,true,0.5,1,0.3);
 		    break;
 	  }
 
@@ -294,6 +294,7 @@ public class MainDriver {
 	  System.out.println("Masukkan path file dataset:");
 	  System.out.print("### > ");
 	  String testDataLocation = (new Scanner(System.in)).nextLine();
+          testDataLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/weather.numeric.empty.arff";
 
 	  System.out.println("Mengambil test dataset...");
 	  try {
