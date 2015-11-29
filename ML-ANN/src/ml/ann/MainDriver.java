@@ -35,7 +35,7 @@ public class MainDriver {
 	  Scanner input = new Scanner(System.in);
 	  System.out.print("Input complete file location: ");
 	  String fileLocation = input.nextLine();
-          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/weather.nominal.arff";
+          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/iris.arff";
           
 //          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/iris.arff";
 

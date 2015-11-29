@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+<<<<<<< HEAD
+=======
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/SPM/git/wkn2/wekaann/ML-ANN/test-arffs/iris.2D.arff</file>
+            <file>file:/C:/Users/SPM/git/wkn2/wekaann/ML-ANN/src/ml/ann/SinglePTR.java</file>
+            <file>file:/C:/Users/SPM/git/wkn2/wekaann/ML-ANN/src/ml/ann/MainPTR.java</file>
+            <file>file:/C:/Users/SPM/git/wkn2/wekaann/ML-ANN/src/ml/ann/MultiClassPTR.java</file>
+        </group>
+    </open-files>
+>>>>>>> b8148dfbbb773fcfc3185ee68a7437e4295c7417
+</project-private>
