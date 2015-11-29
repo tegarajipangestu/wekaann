@@ -25,6 +25,7 @@ package ml.ann;
 
 import java.io.Serializable;
 import java.util.Enumeration;
+import java.util.Random;
 import weka.classifiers.Classifier;
 import weka.classifiers.rules.ZeroR;
 import weka.core.Capabilities;
@@ -33,6 +34,7 @@ import weka.core.Instances;
 import weka.core.Option;
 import weka.core.OptionHandler;
 import weka.core.Randomizable;
+import weka.core.Utils;
 import weka.core.WeightedInstancesHandler;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NominalToBinary;
@@ -44,7 +46,6 @@ import weka.filters.unsupervised.attribute.NominalToBinary;
 public class BackPropagation implements Classifier, OptionHandler, WeightedInstancesHandler, Randomizable, Serializable {
 
     private static final long serialVersionUID = -5990607817048210779L;
-    private static final int DEFAULT_INIT_WEIGHT = 0;
 
     private NeuronTopology neuronTopology;
 
@@ -74,27 +75,14 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         }
     }
 
-    public BackPropagation(int epoch, double terminateMSE, boolean hasBias, boolean _normalizeAttributes, double learningRate) {
+    public BackPropagation(int epoch, double terminateMSE, boolean hasBias, boolean _normalizeAttributes, double learningRate, int numHiddenLayer, double momentum) {
         neuronTopology = new NeuronTopology();
         neuronTopology.epoch = epoch;
         neuronTopology.terminateMSE = terminateMSE;
         neuronTopology.hasBias = hasBias;
         normalizeAttributes = _normalizeAttributes;
         neuronTopology.learningRate = learningRate;
-    }
-
-    public void printOutput() {
-        System.out.println("----------Output-----------");
-        for (int i = 0; i < neuronTopology.numLayers; i++) {
-            for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
-                System.out.print(neuronTopology.output[i][j] + " ");
-            }
-            System.out.println("");
-        }
-    }
-
-    public void printTarget() {
-        System.out.println("Target = " + neuronTopology.target);
+        neuronTopology.numLayers = 2 + numHiddenLayer;
     }
 
     public void printInstances() {
@@ -105,52 +93,147 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         }
     }
 
-    /**
-     * Assuming each neuron in layers are (numAttributes+numClasses) / 2
-     */
+    public void printInput() {
+        System.out.println("==============================Input==============================");
+        for (int i = 0; i < neuronTopology.instances.numAttributes(); i++) {
+            System.out.println("Input[" + i + "] = " + neuronTopology.input[i]);
+        }
+        System.out.println("==============================Input==============================");
+    }
+
+    public void printOutput() {
+        System.out.println("==============================Output==============================");
+        for (int i = 0; i < neuronTopology.numLayers; i++) {
+            for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
+                System.out.print(neuronTopology.output[i][j] + " ");
+            }
+            System.out.println("");
+        }
+    }
+
+    public void printWeight() {
+        System.out.println("==============================Weight==============================");
+        for (int i = 0; i < neuronTopology.numLayers - 1; i++) {
+            for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
+                for (int k = 0; k < neuronTopology.numNeuronEachLayer[i + 1]; k++) {
+                    System.out.print(neuronTopology.weight[i][j][k] + " ");
+                }
+            }
+            System.out.println("");
+        }
+        System.out.println("==============================Weight==============================");
+    }
+
+    public void printError() {
+        System.out.println("==============================Error==============================");
+        for (int i = 1; i < neuronTopology.numLayers; i++) {
+            for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
+                System.out.print(neuronTopology.error[i][j] + " ");
+            }
+            System.out.println("");
+        }
+        System.out.println("==============================Error==============================");
+    }
+
+    public void printTarget() {
+        System.out.println("==============================Target==============================");
+        if (neuronTopology.instances.classAttribute().isNumeric()) {
+            System.out.println(neuronTopology.target[0]);
+        } else if (neuronTopology.instances.classAttribute().isNominal()) {
+            for (int i = 0; i < neuronTopology.instances.numClasses(); i++) {
+                System.out.println(neuronTopology.target[i] + " ");
+            }
+        }
+        System.out.println("==============================Target==============================");
+    }
+
+    public void printStatistic() {
+        printInput();
+        printOutput();
+        printTarget();
+        printError();
+        printWeight();
+    }
+
     public void setupNetwork() {
 
         int idxLastLayer = neuronTopology.numLayers - 1;
         int idxFirstLayer = 0;
         neuronTopology.numAttribute = neuronTopology.instances.numAttributes();
         neuronTopology.numClasses = neuronTopology.instances.numClasses();
+        neuronTopology.numNeuronEachLayer = new int[neuronTopology.numLayers];
+        neuronTopology.output = new double[neuronTopology.numLayers][];
+        neuronTopology.error = new double[neuronTopology.numLayers][];
+        neuronTopology.weight = new double[neuronTopology.numLayers][][];
+        neuronTopology.previousDeltaWeight = new double[neuronTopology.numLayers][][];
+        neuronTopology.deltaWeight = new double[neuronTopology.numLayers][][];
         for (int i = 0; i < neuronTopology.numLayers; i++) {
             if (i == idxFirstLayer) {
-                neuronTopology.input = new double[i][neuronTopology.numAttribute];
-                neuronTopology.output = new double[i][neuronTopology.numAttribute];
-                neuronTopology.numNeuronEachLayer[i] = neuronTopology.numAttribute;
+                neuronTopology.numNeuronEachLayer[i] = neuronTopology.numAttribute + 1;
             } else if (i == idxLastLayer) {
-                neuronTopology.input = new double[i][neuronTopology.numClasses];
                 neuronTopology.numNeuronEachLayer[i] = neuronTopology.numClasses;
-                neuronTopology.output = new double[i][neuronTopology.numClasses];
-                neuronTopology.weight = new double[i][neuronTopology.numNeuronEachLayer[i - 1]][neuronTopology.numNeuronEachLayer[i]];
+            } else {
+                neuronTopology.numNeuronEachLayer[i] = (neuronTopology.numAttribute + neuronTopology.numClasses) / 2;
+            }
+        }
+
+        for (int i = 0; i < neuronTopology.numLayers; i++) {
+            if (i == idxFirstLayer) {
+                neuronTopology.input = new double[neuronTopology.numNeuronEachLayer[i]];
+                neuronTopology.output[i] = new double[neuronTopology.numNeuronEachLayer[i]];
+                neuronTopology.weight[i] = new double[neuronTopology.numNeuronEachLayer[i]][];
+                neuronTopology.previousDeltaWeight[i] = new double[neuronTopology.numNeuronEachLayer[i]][];
+                neuronTopology.deltaWeight[i] = new double[neuronTopology.numNeuronEachLayer[i]][];
+                neuronTopology.error[i] = new double[neuronTopology.numAttribute];
+                for (int j = 0; j < neuronTopology.weight[i].length; j++) {
+                    neuronTopology.weight[i][j] = new double[neuronTopology.numNeuronEachLayer[i + 1]];
+                    neuronTopology.previousDeltaWeight[i][j] = new double[neuronTopology.numNeuronEachLayer[i + 1]];
+                    neuronTopology.deltaWeight[i][j] = new double[neuronTopology.numNeuronEachLayer[i + 1]];
+                }
+            } else if (i == idxLastLayer) {
+                neuronTopology.output[i] = new double[neuronTopology.numClasses];
+                neuronTopology.error[i] = new double[neuronTopology.numClasses];
             } else { //hidden layers
                 int numNeuronHiddenLayer = (neuronTopology.numAttribute + neuronTopology.numClasses) / 2;
-                neuronTopology.numNeuronEachLayer[i] = numNeuronHiddenLayer;
-                neuronTopology.output = new double[i][numNeuronHiddenLayer];
-                neuronTopology.weight = new double[i][neuronTopology.numNeuronEachLayer[i - 1]][neuronTopology.numNeuronEachLayer[i]];
+                neuronTopology.output[i] = new double[numNeuronHiddenLayer];
+                neuronTopology.error[i] = new double[numNeuronHiddenLayer];
+                neuronTopology.weight[i] = new double[neuronTopology.numNeuronEachLayer[i]][neuronTopology.numNeuronEachLayer[i + 1]];
+                neuronTopology.previousDeltaWeight[i] = new double[neuronTopology.numNeuronEachLayer[i]][neuronTopology.numNeuronEachLayer[i + 1]];
+                neuronTopology.deltaWeight[i] = new double[neuronTopology.numNeuronEachLayer[i]][neuronTopology.numNeuronEachLayer[i + 1]];
             }
         }
     }
 
     public void initNetwork() {
-        int defaultWeightValue = DEFAULT_INIT_WEIGHT;
+        Random random = new Random();
+        double defaultWeightValue = 1;
+//        double defaultWeightValue = random.nextDouble() - 0.5;
         int firstLayerIdx = 0;
+        int lastLayerIdx = neuronTopology.numLayers - 1;
         for (int i = 0; i < neuronTopology.numLayers; i++) {
             for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
                 if (i == firstLayerIdx) {
-                    neuronTopology.input[i][j] = neuronTopology.instances.instance(1).value(j);
+
                 } else {
-                    neuronTopology.input[i][j] = Double.NaN;
+                    neuronTopology.input[j] = Double.NaN;
                 }
                 neuronTopology.output[i][j] = Double.NaN;
             }
 
-            for (int j = 0; j < neuronTopology.numNeuronEachLayer[i - 1]; j++) {
-                for (int k = 0; k < neuronTopology.numNeuronEachLayer[i]; i++) {
-                    neuronTopology.weight[i][j][k] = defaultWeightValue;
+            if (i != lastLayerIdx) {
+                for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
+                    for (int k = 0; k < neuronTopology.numNeuronEachLayer[i + 1]; k++) {
+                        neuronTopology.weight[i][j][k] = defaultWeightValue;
+                        neuronTopology.previousDeltaWeight[i][j][k] = 0;
+                        neuronTopology.deltaWeight[i][j][k] = 0;
+                    }
                 }
             }
+        }
+        if (neuronTopology.instances.classAttribute().isNumeric()) {
+            neuronTopology.target = new double[0];
+        } else if (neuronTopology.instances.classAttribute().isNominal()) {
+            neuronTopology.target = new double[neuronTopology.instances.numClasses()];
         }
     }
 
@@ -160,9 +243,9 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         int firstLayer = 0;
         double result = 0;
         if (currentLayer == firstLayer) {
-            return neuronTopology.input[currentLayer][idxCurrentNeuron] * 1; //assuming weight in first layer is 1
+            return neuronTopology.input[idxCurrentNeuron] * 1; //assuming weight in first layer is 1
         } else {
-            int numNeuronPreviousLayer = neuronTopology.output[previousLayer].length;
+            int numNeuronPreviousLayer = neuronTopology.numNeuronEachLayer[currentLayer - 1];
             for (int i = 0; i < numNeuronPreviousLayer; i++) {
                 result += neuronTopology.output[previousLayer][i]
                         * neuronTopology.weight[previousLayer][i][idxCurrentNeuron];
@@ -171,10 +254,19 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         return 1 / (1 + Math.exp(-1 * result));
     }
 
+    private void removeMissingValue() {
+        for (int j = 0; j < neuronTopology.instances.numAttributes(); j++) {
+            neuronTopology.instances.deleteWithMissing(j);
+        }
+    }
+
     @Override
     public void buildClassifier(Instances data) throws Exception {
+        neuronTopology.originInstances = data;
         neuronTopology.instances = new Instances(data);
         neuronTopology.instances.deleteWithMissingClass();
+
+        removeMissingValue();
 
         zeroR = new weka.classifiers.rules.ZeroR();
         zeroR.buildClassifier(neuronTopology.instances);
@@ -188,15 +280,14 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
             useDefaultModel = false;
         }
 
+        neuronTopology.numAttribute = neuronTopology.instances.numAttributes();
+        neuronTopology.numClasses = neuronTopology.instances.numClasses();
+
         nominalToBinaryFilter = new NominalToBinary();
         nominalToBinaryFilter.setInputFormat(neuronTopology.instances);
         neuronTopology.instances = Filter.useFilter(neuronTopology.instances, nominalToBinaryFilter);
 
         System.out.println("Instances = " + neuronTopology.instances.toSummaryString());
-
-        int numAttributesWithoutClassAttribute = neuronTopology.instances.numAttributes() - 1;
-        neuronTopology.numAttribute = numAttributesWithoutClassAttribute;
-        neuronTopology.numClasses = neuronTopology.instances.numClasses();
 
         normalization();
 
@@ -214,43 +305,146 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
         initNetwork();
 
         for (int epoch = 0; epoch < neuronTopology.epoch; epoch++) {
+            double epochError = 0;
+            int idxLastLayer = neuronTopology.numLayers - 1;
             for (int inst = 0; inst < neuronTopology.instances.numInstances(); inst++) {
 
+//                System.out.println("inst and epoch = " + inst + " , " + epoch);
                 initInputAndTarget(inst);
 
+//                System.out.println("Initial");
+//                printStatistic();
                 for (int layers = 0; layers < neuronTopology.numLayers; layers++) {
                     for (int neu = 0; neu < neuronTopology.numNeuronEachLayer[layers]; neu++) {
                         neuronTopology.output[layers][neu] = sigmoidFunction(layers, neu);
                     }
                 }
-                for (int layer = neuronTopology.numLayers - 1; layer >= 0; layer--) {
+                for (int layer = idxLastLayer; layer >= 0; layer--) {
                     for (int neu = 0; neu < neuronTopology.numNeuronEachLayer[layer]; neu++) {
-                        neuronTopology.error[layer][neu] = computeError(layer, neu);
-                        for (int preneu = 0; preneu < neuronTopology.numNeuronEachLayer[layer - 1]; preneu++) {
-                            neuronTopology.weight[layer - 1][preneu][neu] = updateWeight(layer-1, preneu, neu);
+                        int firstIdxLayer = 0;
+                        if (layer != firstIdxLayer) {
+                            neuronTopology.error[layer][neu] = computeError(layer, neu);
+                            for (int preneu = 0; preneu < neuronTopology.numNeuronEachLayer[layer - 1]; preneu++) {
+                                neuronTopology.weight[layer - 1][preneu][neu] = updateWeight(layer - 1, preneu, neu);
+                            }
                         }
                     }
                 }
+                for (int i = 0; i < neuronTopology.numNeuronEachLayer[idxLastLayer]; i++) {
+                    epochError += computeMSE(neuronTopology.target[i], neuronTopology.output[idxLastLayer][i]);
+                }
+                System.out.println("AfterLearning");
+                printStatistic();
             }
         }
-        printOutput();
     }
 
-    private double computeError(int idxLayer, int idxNeuron) {
+    private double computeMSE(double target, double output) {
+        return Math.pow(target - output, 2);
+    }
+
+    private double computeError(int idxLayer, int idxNeuron) throws Exception {
+        int lastLayerIdx = neuronTopology.numLayers - 1;
+        int firstLayerIdx = 0;
         double currentOutput = neuronTopology.output[idxLayer][idxNeuron];
-        return currentOutput * (1 - currentOutput) * neuronTopology.target - currentOutput;
+        double maudyAyunda = 0;
+        if (idxLayer == lastLayerIdx) {
+            return currentOutput * (1 - currentOutput) * neuronTopology.target[idxNeuron] - currentOutput;
+        } else if (idxLayer != firstLayerIdx) {
+            for (int i = 0; i < neuronTopology.numNeuronEachLayer[idxLayer + 1]; i++) {
+                maudyAyunda = maudyAyunda + (neuronTopology.error[idxLayer + 1][i] * neuronTopology.weight[idxLayer][idxNeuron][i]);
+            }
+            return currentOutput * (1 - currentOutput) * maudyAyunda;
+        } else {
+            throw new Exception("Jancuk");
+        }
+    }
+
+    private double computeMomentumCuk(int idxLayer, int idxCurrentNeuron, int idxNextNeuron) {
+        return neuronTopology.momentum * neuronTopology.previousDeltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron];
     }
 
     private double updateWeight(int idxLayer, int idxCurrentNeuron, int idxNextNeuron) {
-        return neuronTopology.weight[idxLayer][idxCurrentNeuron][idxNextNeuron] + (neuronTopology.learningRate*neuronTopology.error[idxLayer][idxCurrentNeuron]*neuronTopology.output[idxLayer][idxCurrentNeuron]);
+        int lastLayerIdx = neuronTopology.numLayers - 1;
+        int idxNextLayer = idxLayer + 1;
+
+        if (idxLayer == lastLayerIdx) {
+            neuronTopology.previousDeltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron]
+                    = neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron];
+            neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron] = (neuronTopology.learningRate
+                    * neuronTopology.error[idxLayer][idxNextNeuron]
+                    * neuronTopology.output[idxLayer][idxNextNeuron])
+                    + computeMomentumCuk(idxLayer, idxCurrentNeuron, idxNextNeuron);
+
+            return neuronTopology.weight[idxLayer - 1][idxCurrentNeuron][idxNextNeuron]
+                    + neuronTopology.deltaWeight[idxLayer][idxCurrentNeuron][idxNextNeuron];
+        } else if (idxLayer == 0) {
+            return neuronTopology.weight[idxLayer][idxCurrentNeuron][idxNextNeuron]
+                    + (neuronTopology.learningRate * neuronTopology.error[idxLayer + 1][idxNextNeuron]
+                    * neuronTopology.input[idxCurrentNeuron]);
+        } else {
+            return neuronTopology.weight[idxLayer][idxCurrentNeuron][idxNextNeuron]
+                    + (neuronTopology.learningRate * neuronTopology.error[idxLayer][idxNextNeuron]
+                    * neuronTopology.output[idxLayer][idxCurrentNeuron]);
+        }
     }
 
     private void initInputAndTarget(int instancesIdx) {
         int classAttributeIdx = neuronTopology.instances.classIndex();
-        neuronTopology.target = neuronTopology.instances.instance(instancesIdx).value(classAttributeIdx);
-        for (int i = 0; i < neuronTopology.instances.numAttributes(); i++) {
-            neuronTopology.input[0][i] = neuronTopology.instances.instance(instancesIdx).value(i);
+        if (neuronTopology.instances.classAttribute().isNumeric()) {
+            neuronTopology.target = new double[1];
+            neuronTopology.target[0] = neuronTopology.instances.instance(instancesIdx).value(classAttributeIdx);
+        } else if (neuronTopology.instances.classAttribute().isNominal()) {
+            neuronTopology.target = new double[neuronTopology.instances.numClasses()];
+            for (int i = 0; i < neuronTopology.instances.numClasses(); i++) {
+                neuronTopology.target[i] = 0;
+            }
+            int idxClassValue = (int) neuronTopology.instances.instance(instancesIdx).classValue();
+            neuronTopology.target[idxClassValue] = 1;
         }
+        for (int i = 0; i < neuronTopology.instances.numAttributes(); i++) {
+            if (i == 0) {
+                neuronTopology.input[i] = 1;
+                neuronTopology.output[0][i] = 1;
+            } else {
+                neuronTopology.input[i] = neuronTopology.instances.instance(instancesIdx).value(i - 1);
+                neuronTopology.output[0][i] = neuronTopology.instances.instance(instancesIdx).value(i - 1);
+            }
+        }
+//        System.out.println(neuronTopology.originInstances.instance(instancesIdx).toString());
+    }
+
+    private void initInputAndTarget(Instance instance) {
+        int classAttributeIdx = neuronTopology.instances.classIndex();
+        if (neuronTopology.instances.classAttribute().isNumeric()) {
+            neuronTopology.target = new double[1];
+            neuronTopology.target[0] = instance.value(classAttributeIdx);
+        } else if (neuronTopology.instances.classAttribute().isNominal()) {
+            neuronTopology.target = new double[instance.numClasses()];
+            for (int i = 0; i < instance.numClasses(); i++) {
+                neuronTopology.target[i] = 0;
+            }
+            int idxClassValue = (int) instance.classValue();
+            neuronTopology.target[idxClassValue] = 1;
+        }
+        for (int i = 0; i < instance.numAttributes(); i++) {
+            if (i == 0) {
+                neuronTopology.input[i] = 1;
+                neuronTopology.output[0][i] = 1;
+            } else {
+                neuronTopology.input[i] = instance.value(i - 1);
+                neuronTopology.output[0][i] = instance.value(i - 1);
+            }
+        }
+//        System.out.println(neuronTopology.originInstances.instance(instancesIdx).toString());
+    }
+
+    private void evaluation() {
+
+    }
+
+    private double computeMSE() {
+        return 0.0;
     }
 
     private void normalization() {
@@ -296,9 +490,10 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
     }
 
     public void resetNetwork() {
-        int lastLayerIdx = neuronTopology.numLayers - 1;
-        for (int i = 0; i < neuronTopology.numClasses; i++) {
-//            neuronTopology.output[lastLayerIdx][i] = 0;
+        for (int i = 0; i < neuronTopology.numLayers; i++) {
+            for (int j = 0; j < neuronTopology.numNeuronEachLayer[i]; j++) {
+                neuronTopology.output[i][j] = Double.NaN;
+            }
         }
     }
 
@@ -329,38 +524,31 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
 
     @Override
     public double classifyInstance(Instance instance) throws Exception {
-        throw new UnsupportedOperationException("classifyInstance Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+//        initInputAndTarget(instance);
+
+        int lastLayerIdx = neuronTopology.instances.numClasses();
+        for (int layers = 0; layers < neuronTopology.numLayers; layers++) {
+            for (int neu = 0; neu < neuronTopology.numNeuronEachLayer[layers]; neu++) {
+                neuronTopology.output[layers][neu] = sigmoidFunction(layers, neu);
+            }
+        }
+        return Utils.maxIndex(neuronTopology.output[lastLayerIdx]);
     }
 
     @Override
     public double[] distributionForInstance(Instance instance) throws Exception {
 
         Instance currentInstance;
-        boolean hasNominalAttribute = false;
         // default model?
         if (useDefaultModel) {
             return zeroR.distributionForInstance(instance);
         }
 
-        for (int i = 0; i < instance.numAttributes(); i++) {
-            if (instance.classIndex() != i) {
-                if (instance.attribute(i).isNominal()) {
-                    hasNominalAttribute = true;
-                    break;
-                }
-            }
-        }
-        if (hasNominalAttribute) {
-            nominalToBinaryFilter.input(instance);
-            currentInstance = nominalToBinaryFilter.output();
-        } else {
-            currentInstance = instance;
-        }
-
         // Make a copy of the instance so that it isn't modified
-        currentInstance = (Instance) currentInstance.copy();
+        currentInstance = (Instance) instance.copy();
 
-        for (int noa = 0; noa < neuronTopology.instances.numAttributes(); noa++) {
+        for (int noa = 0; noa < currentInstance.numAttributes(); noa++) {
             if (noa != neuronTopology.instances.classIndex()) {
                 if (attributeRanges[noa] != 0) {
                     currentInstance.setValue(noa,
@@ -372,30 +560,35 @@ public class BackPropagation implements Classifier, OptionHandler, WeightedInsta
                 }
             }
         }
-        resetNetwork();
+//        resetNetwork();
 
-        // since all the output values are needed.
-        // They are calculated manually here and the values collected.
-        double[] theArray = new double[neuronTopology.numClasses];
-        for (int noa = 0; noa < neuronTopology.numClasses; noa++) {
-//            theArray[noa] = neuronTopology.outputs[noa].outputValue(true);
+//        initInputAndTarget(currentInstance);
+
+        int lastLayerIdx = neuronTopology.numLayers - 1;
+        for (int layers = 0; layers < neuronTopology.numLayers; layers++) {
+            for (int neu = 0; neu < neuronTopology.numNeuronEachLayer[layers]; neu++) {
+                neuronTopology.output[layers][neu] = sigmoidFunction(layers, neu);
+            }
         }
-        if (neuronTopology.instances.classAttribute().isNumeric()) {
-            return theArray;
+
+        double[] jancuk = new double[neuronTopology.numNeuronEachLayer[lastLayerIdx]];
+
+        for (int i = 0; i < neuronTopology.numNeuronEachLayer[lastLayerIdx]; i++) {
+            jancuk[i] = neuronTopology.output[lastLayerIdx][i];
         }
 
         // now normalize the array
         double count = 0;
         for (int noa = 0; noa < neuronTopology.numClasses; noa++) {
-            count += theArray[noa];
+            count += jancuk[noa];
         }
         if (count <= 0) {
 //            return zeroR.distributionForInstance(i);
         }
         for (int noa = 0; noa < neuronTopology.numClasses; noa++) {
-            theArray[noa] /= count;
+            jancuk[noa] /= count;
         }
-        return theArray;
+        return jancuk;
     }
 
     @Override

@@ -24,6 +24,7 @@
 package ml.ann;
 
 import java.io.Serializable;
+import java.util.List;
 import weka.core.Instances;
 
 /**
@@ -33,8 +34,8 @@ import weka.core.Instances;
 public class NeuronTopology implements Serializable {
 
     public double[][][] weight; // [layer sumber][neuron sumber][neuron tujuan]
-    public double[][] input;
-    public double target;
+    public double[] input;
+    public double[] target;
     public double[][] dummyInstances; //[n-instance][n-attribute]
     public double[][] output; // [layer sumber][neuron sumber]
     public double[][] error; // [layer sumber][neuron sumber]
@@ -42,13 +43,13 @@ public class NeuronTopology implements Serializable {
     public double learningRate;
     public double momentum;
     public int numLayers;
-    public int numHiddenLayers;
     public int epoch;
     public boolean hasBias;
     public Instances instances;
-    public int[] numNeuronEachHiddenLayers;
     public int numClasses;
     public int numAttribute;
     public double terminateMSE;
-    
+    public Instances originInstances;
+    public double[][][] previousDeltaWeight;
+    public double[][][] deltaWeight;
 }

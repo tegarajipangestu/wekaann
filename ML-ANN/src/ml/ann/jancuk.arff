@@ -1,0 +1,13 @@
+@relation testing
+
+@attribute attr1 numeric
+@attribute attr2 numeric
+@attribute attr3 numeric
+@attribute attr4 numeric
+@attribute class {-1,1}
+
+
+@data
+1,1,0,1,-1
+1,0,-1,-1,1
+1,-1,-0.5,-1,1

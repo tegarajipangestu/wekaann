@@ -37,6 +37,7 @@ public class MainDriver {
 	  Scanner input = new Scanner(System.in);
 	  System.out.print("Input complete file location: ");
 	  String fileLocation = input.nextLine();
+          fileLocation = "/home/tegarnization/Documents/code/repo/wekaann/ML-ANN/src/ml/ann/weather.numeric.arff";
           
 //          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/iris.arff";
 
@@ -203,7 +204,8 @@ public class MainDriver {
 		case 2:
 		    break;
 		case 3:
-                    model = new BackPropagation(10,1,false,false,1);
+//                    model = new MultilayerPerceptron();
+                    model = new BackPropagation(5,1,false,true,0.25,2,10);
 		    break;
 	  }
 
