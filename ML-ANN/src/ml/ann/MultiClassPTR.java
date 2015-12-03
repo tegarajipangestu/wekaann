@@ -5,332 +5,218 @@
  */
 package ml.ann;
 
+import java.io.Serializable;
+import java.util.Enumeration;
 import java.util.Scanner;
-import weka.classifiers.Classifier;
+import static ml.ann.MainPTR.m_nominalToBinaryFilter;
+import static ml.ann.MainPTR.m_normalize;
+import weka.classifiers.AbstractClassifier;
+import weka.core.Attribute;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.Option;
+import weka.core.OptionHandler;
+import weka.core.Randomizable;
+import weka.core.WeightedInstancesHandler;
+import weka.filters.Filter;
 
 /**
  *
  * @author Ivana Clairine
  */
-public class MultiClassPTR implements Classifier {
+public class MultiClassPTR extends AbstractClassifier implements OptionHandler, WeightedInstancesHandler, Randomizable, Serializable {
 
-	public int num_instance; //jumlah instance
-	public int num_input; //jumlah node input, belum termasuk bias
-	public int num_output; //jumlah node output
+	public int numInstance; //jumlah instance
+	public int numInput; //jumlah node input, belum termasuk bias
+	public int numOutput; //jumlah node output
 	public double[][] weight; //weight dari input ke neuron
-	public double[][] input; //jumlah masukan
-	public double[][] target; //dimensi pertama: nomor instance, dimensi kedua: nomor neuron output
-	public int max_epoch;
-	public double learning_rate;
+	public double[][] inputInstances; //jumlah masukan
+	public double[][] targetInstances; //dimensi pertama: nomor instance, dimensi kedua: nomor neuron output
+	public int maxEpoch;
+	public double learningRate;
 	public double threshold;
 	public double momentum;
-        public int algo;
-        public boolean randomWeight;
+	public int algo;
+	public boolean randomWeight;
 
 	public int actFunc = 0;
-	Scanner funcScan = new Scanner(System.in);
-        
-        public MultiClassPTR(int algo, boolean randomWeight, double learning_rate, int max_epoch, double error_thres){
-            this.algo = algo;
-            this.randomWeight = randomWeight;
-            this.learning_rate = learning_rate;
-            this.max_epoch = max_epoch;
-            this.threshold = error_thres;
-        }
+	transient Scanner funcScan = new Scanner(System.in);
+
+	public MultiClassPTR(int algo, boolean randomWeight, double learning_rate, int max_epoch, double error_thres) {
+		this.algo = algo;
+		this.randomWeight = randomWeight;
+		this.learningRate = learning_rate;
+		this.maxEpoch = max_epoch;
+		this.threshold = error_thres;
+	}
 
 	public MultiClassPTR(int num_instance, int num_input, int num_output, double[][] input, double[][] weight,
 		double[][] target, int max_epoch, double learning_rate, double threshold, int algo, double momentum, boolean isRandomWeight) {
-		this.num_instance = num_instance;
-		this.num_input = num_input;
-		this.num_output = num_output;
-		this.input = new double[num_instance][num_input + 1];
-		this.input = input;
-		weight = new double[num_input + 1][num_output];
-		this.weight = weight;
-		this.momentum = momentum;
-		this.target = target;
-		this.max_epoch = max_epoch;
-		this.learning_rate = learning_rate;
-		this.threshold = threshold;
-		if (algo == 1) {
-			buildClassifier(1, isRandomWeight);
-		} else if (algo == 2) {
-			buildClassifier(2, isRandomWeight);
-		} else if (algo == 3) {
-			buildClassifierBatch(isRandomWeight);
-		}
-	}
-        
-        public void setAttribute(int num_instance, int num_input, int num_output, double[][] input, double[][] weight,
-		double[][] target, int max_epoch, double learning_rate, double threshold, int algo, double momentum, boolean isRandomWeight){
-            this.num_instance = num_instance;
-		this.num_input = num_input;
-		this.num_output = num_output;
-		this.input = new double[num_instance][num_input + 1];
-		this.input = input;
-		weight = new double[num_input + 1][num_output];
-		this.weight = weight;
-		this.momentum = momentum;
-		this.target = target;
-		this.max_epoch = max_epoch;
-		this.learning_rate = learning_rate;
-		this.threshold = threshold;
-		if (algo == 1) {
-			buildClassifier(1, isRandomWeight);
-		} else if (algo == 2) {
-			buildClassifier(2, isRandomWeight);
-		} else if (algo == 3) {
-			buildClassifierBatch(isRandomWeight);
-		}
-        }
+		this.numInstance = num_instance;
+		this.numInput = num_input;
+		this.numOutput = num_output;
+		this.inputInstances = new double[num_instance][num_input + 1];
+		this.inputInstances = input;
+		this.weight = new double[num_input + 1][num_output];
+//		this.weight = weight;
 
-	public void setWeight() {
+		//copy first array of weight
+//		System.out.println("This.Weight.length: " + this.weight.length);
+//		System.out.println("Weight.length: " + weight.length);
+//		System.out.println("This.Weight[0].length: " + this.weight[0].length);
+//		System.out.println("Weight[0].length: " + weight[0].length);
+		for (int copier = 0; copier < weight[0].length; copier++) {
+			this.weight[0][copier] = weight[0][copier];
+			System.out.println("this.weight[0][" + copier + "]:" + this.weight[0][copier]);
+		}
+
+		this.momentum = momentum;
+		this.targetInstances = target;
+		this.maxEpoch = max_epoch;
+		this.learningRate = learning_rate;
+		this.threshold = threshold;
+	}
+
+	public void initAttributes(Instances instances) {
+		numInstance = instances.numInstances();
+		numInput = instances.numAttributes(); // Including bias
+		
+		inputInstances = new double[numInstance][numInput];// add values of attributes including bias value
+		Attribute classAttribute = instances.classAttribute();
+		if (classAttribute.isNominal()) {
+			numOutput = classAttribute.numValues();
+		} else {
+			numOutput = 1;
+		}
+		targetInstances = new double[numInstance][numOutput];
+		weight = new double[numInput][numOutput];
+		
+		
 		double rangeMin = 0.0;
 		double rangeMax = 1.0;
-		for (int i = 1; i <= num_input - 1; i++) {
-			weight[i][0] = Math.random() * (rangeMax - rangeMin) + rangeMin;
+		for (int i = 0; i < numInput; ++i) {
+			for (int j = 0; j < numOutput; ++j) {
+				weight[i][j] = Math.random() * (rangeMax - rangeMin) + rangeMin;
+			}
 		}
 	}
 
-	public void buildClassifier(int algo, boolean randomWeight) {
-		double[][] output = new double[num_instance][num_output];
-		double[][] error = new double[num_instance][num_output];
-		double[][] deltaweight = new double[num_input + 1][num_output];
-		boolean stop = false;
-		int iterator = 1;
-
-		//set apakah mau dirandom weightnya
-		if (randomWeight) {
-			setWeight();
-		}
-
-		if (algo == 1) {
-			System.out.println("Pilih fungsi aktivasi: ");
-			System.out.println("1. Step");
-			System.out.println("2. Sign");
-			System.out.println("3. Sigmoid");
-			actFunc = funcScan.nextInt();
-		}
-
-		while (iterator <= max_epoch && !stop) {
-			System.out.println("--- Iterasi " + iterator + " ---");
-
-			for (int out = 0; out < num_output; out++) {
-				for (int i = 0; i < num_instance; i++) {
-					//hitung output
-					System.out.println(actFunc);
-					if (algo == 1) //kalau algoritma PTR, pilih algo
-					{
-						output[i][out] = 0.0;
-						for (int j = 0; j <= num_input; j++) {
-							output[i][out] += input[i][j] * weight[j][out];
-						}
-						System.out.print("output[" + i + "][" + out + "]" + output[i][out] + " | ");
-						output[i][out] = this.actFunction(output[i][out]);
-						System.out.println("output[" + i + "][" + out + "]" + output[i][out]);
-
-					} else if (algo == 2) //kalau delta rule, ga pake step
-					{
-						output[i][out] = 0.0;
-						for (int j = 0; j <= num_input; j++) {
-							output[i][out] += input[i][j] * weight[j][out];
-						}
+	public void buildClassifier() {
+		double[][] deltaWeight = new double[numInput][numOutput];
+		for (int it = 0; it < maxEpoch; ++it) {
+			for (int instanceIdx = 0; instanceIdx < numInstance; ++instanceIdx) {
+				double[] input = inputInstances[instanceIdx];
+				
+				double[] targets = targetInstances[instanceIdx];
+				for (int outputIdx = 0; outputIdx < numOutput; ++outputIdx) {
+					double target = targets[outputIdx];
+					
+					double sigmaInputWeight = 0.0;
+					for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+						sigmaInputWeight += input[inputIdx] * weight[inputIdx][outputIdx];
 					}
-					//System.out.println("output awal["+i+"]: "+output[i]);
-					//hitung error
-					error[i][out] = target[i][out] - output[i][out];
-
-					//hitung deltaWeight dan setNewWeight
-					for (int j = 0; j <= num_input; j++) {
-						deltaweight[j][out] = learning_rate * (1 - momentum) * error[i][out] * input[i][j] + (momentum * deltaweight[j][out]);
-						weight[j][out] = weight[j][out] + deltaweight[j][out];
-						//System.out.println("deltaweight["+j+"]: "+deltaweight[j]);
+					double output;
+					output = actFunction(sigmaInputWeight);
+					
+					double error = target-output;
+										
+					for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+						sigmaInputWeight += input[inputIdx] * weight[inputIdx][outputIdx];
+						deltaWeight[inputIdx][outputIdx] = (learningRate * error * input[inputIdx]) + (momentum * deltaWeight[inputIdx][outputIdx]);
+						weight[inputIdx][outputIdx] += deltaWeight[inputIdx][outputIdx];
 					}
+					
 				}
-
-				for (int i = 0; i < num_instance; i++) {
-					//hitung output akhir
-					if (algo == 1) {
-						output[i][out] = 0.0;
-						for (int j = 0; j <= num_input; j++) {
-							output[i][out] += input[i][j] * weight[j][out];
-						}
-//						System.out.print("output[" + i + "][" + out + "]" + output[i][out] + " | ");
-						output[i][out] = this.actFunction(output[i][out]);
-//						System.out.println("output[" + i + "][" + out + "]" + output[i][out]);
-
-					} else if (algo == 2) {
-						output[i][out] = 0.0;
-						for (int j = 0; j <= num_input; j++) {
-							output[i][out] += input[i][j] * weight[j][out];
-						}
-					}
-					//System.out.println("output akhir["+i+"]: "+output[i]);
-					//hitung error akhir
-					error[i][out] = target[i][out] - output[i][out];
-				}
-
-				//hitung total error per neuron
-				double sumerror = 0.0;
-				for (int i = 0; i < num_instance; i++) {
-					sumerror += Math.pow(error[i][out], 2);
-				}
-                                System.out.println("sumerror: " + sumerror);
-				if (0.5 * sumerror < threshold) {
-					stop = true;
-				}
-				System.out.println("Total error neuron " + out + ": " + 0.5 * sumerror);
+				
 			}
-			iterator++;
+			
+			double totalError = 0.0;
+			for (int instanceIdx = 0; instanceIdx < numInstance; ++instanceIdx) {
+				double[] input = inputInstances[instanceIdx];
+				
+				double[] targets = targetInstances[instanceIdx];
+				for (int outputIdx = 0; outputIdx < numOutput; ++outputIdx) {
+					double target = targets[outputIdx];
+					
+					double sigmaInputWeight = 0.0;
+					for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+						sigmaInputWeight += input[inputIdx] * weight[inputIdx][outputIdx];
+					}
+					double output;
+					output = actFunction(sigmaInputWeight);
+					
+					double error = target-output;
+					totalError += Math.pow(error, 2);
+				}
+			}
+			if (0.5 * totalError < threshold) {
+				break;
+			}
 		}
 	}
 
-	public void buildClassifierBatch(boolean setweight) {
-		double[][] outputawal = new double[num_instance][num_output];
-		double[][] errorawal = new double[num_instance][num_output];
-		double[][] outputakhir = new double[num_instance][num_output];
-		double[][] errorakhir = new double[num_instance][num_output];
-
-		double[][] deltaweight = new double[num_instance][num_input + 1];
-		double[] sumdelta = new double[num_input + 1];
-		boolean stop = false;
-		int iterator = 1;
-
-		//pilihan untuk inisialisasi weight
-		if (setweight) {
-			setWeight();
-		}
-
-		while (iterator <= max_epoch && !stop) {
-			//hitung output dan error awal
-			System.out.println("--- Iterasi" + iterator + " ---");
-
-			for (int out = 0; out < num_output; out++) {
-				for (int i = 0; i < num_instance; i++) {
-					outputawal[i][out] = 0.0;
-					for (int j = 0; j <= num_input; j++) {
-						outputawal[i][out] += input[i][j] * weight[j][out];
+	public void buildClassifierBatch() {
+		double[][] deltaWeight = new double[numInput][numOutput];
+		for (int it = 0; it < maxEpoch; ++it) {
+			for (int instanceIdx = 0; instanceIdx < numInstance; ++instanceIdx) {
+				double[] input = inputInstances[instanceIdx];
+				
+				double[] targets = targetInstances[instanceIdx];
+				for (int outputIdx = 0; outputIdx < numOutput; ++outputIdx) {
+					double target = targets[outputIdx];
+					
+					double sigmaInputWeight = 0.0;
+					for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+						sigmaInputWeight += input[inputIdx] * weight[inputIdx][outputIdx];
 					}
-
-					outputawal[i][out] = this.actFunction(outputawal[i][out]);
-					//System.out.println("outputawal["+i+"]: "+outputawal[i]);
-					errorawal[i][out] = target[i][out] - outputawal[i][out];
-					//System.out.println("errorawal["+i+"]: "+errorawal[i]);
-				}
-
-				//hitung deltaWeight0 - deltaWeightN
-				for (int i = 0; i < num_instance; i++) {
-					for (int j = 0; j <= num_input; j++) {
-						deltaweight[i][j] = learning_rate * (1 - momentum) * input[i][j] * errorawal[i][out] + (momentum * deltaweight[i][j]);
-
-						//System.out.println("deltaweight["+i+"]["+j+"]: "+deltaweight[i][j]);
+					double output;
+					output = actFunction(sigmaInputWeight);
+					
+					double error = target-output;
+										
+					for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+						sigmaInputWeight += input[inputIdx] * weight[inputIdx][outputIdx];
+						deltaWeight[inputIdx][outputIdx] = (learningRate * error * input[inputIdx]) + (momentum * deltaWeight[inputIdx][outputIdx]);
 					}
+					
 				}
-
-				//hitung sumdelta, untuk hitung output akhir
-				for (int i = 0; i <= num_input; i++) {
-					sumdelta[i] = 0.0;
-					for (int j = 0; j < num_instance; j++) {
-						sumdelta[i] += deltaweight[j][i];
-					}
-					//System.out.println("sumdelta["+i+"]: "+sumdelta[i]);
-				}
-
-				//hitung outputakhir
-				for (int i = 0; i < num_instance; i++) {
-					outputakhir[i][out] = 0.0;
-					for (int j = 0; j <= num_input; j++) {
-						outputakhir[i][out] += input[i][j] * (sumdelta[j] + weight[j][out]);
-					}
-					//System.out.println("outputakhir["+i+"]: "+outputakhir[i]);
-					errorakhir[i][out] = target[i][out] - outputakhir[i][out];
-					//System.out.println("errorakhir["+i+"]: "+errorakhir[i]);
-				}
-
-				//hitung error akhir
-				double sumerror = 0.0;
-				for (int i = 0; i < num_instance; i++) {
-					sumerror += Math.pow(errorakhir[i][out], 2);
-				}
-				if (0.5 * sumerror < threshold) {
-					stop = true;
-				} else {
-					for (int i = 0; i <= num_input; i++) {
-						weight[i][0] = weight[i][0] + sumdelta[i];
-					}
-				}
-				System.out.println("error total output ke-" + out + ": " + 0.5 * sumerror);
+				
 			}
-			iterator++;
-		}
-	}
-
-	public double classifyInstance(double[] input) {
-		double[] output = new double[num_output];
-		for (int out = 0; out < num_output; out++) {
-			output[out] = 0.0;
-			for (int i = 0; i < input.length; i++) {
-				output[out] += input[i] * weight[i][0];
+			
+			for (int outputIdx = 0; outputIdx < numOutput; ++outputIdx) {
+				for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+					weight[inputIdx][outputIdx] += deltaWeight[inputIdx][outputIdx];
+				}
 			}
-//			System.out.print(output[out] + " | ");
-			output[out] = this.actFunction(output[out]);
-//			System.out.println(output[out]);
-		}
-
-		int out = 0;
-		for (int i = 1; i < num_output; i++) {
-			if (output[i] > output[i - 1]) {
-				out = i;
+			double totalError = 0.0;
+			for (int instanceIdx = 0; instanceIdx < numInstance; ++instanceIdx) {
+				double[] input = inputInstances[instanceIdx];
+				
+				double[] targets = targetInstances[instanceIdx];
+				for (int outputIdx = 0; outputIdx < numOutput; ++outputIdx) {
+					double target = targets[outputIdx];
+					
+					double sigmaInputWeight = 0.0;
+					for (int inputIdx = 0; inputIdx < numInput; ++inputIdx) {
+						sigmaInputWeight += input[inputIdx] * weight[inputIdx][outputIdx];
+					}
+					double output;
+					output = actFunction(sigmaInputWeight);
+					
+					double error = target-output;
+					totalError += Math.pow(error, 2);
+				}
+			}
+			if (0.5 * totalError < threshold) {
+				break;
 			}
 		}
-		return output[out];
-	}
-
-	public static void main(String[] args) {
-		int num_instance = 3;
-		int num_input = 3;
-		int max_epoch = 10;
-		int num_output = 1;
-		double LR = 0.1;
-		double threshold = 0.01;
-		double[][] input = new double[num_instance][num_input + 1];
-		double[][] target = new double[num_instance][num_output];
-		double[] error = new double[num_instance];
-		double[] output = new double[num_instance];
-		double[][] weight = new double[num_input + 1][1];
-		
-		input[0][0] = 1.0;
-		input[0][1] = 1.0;
-		input[0][2] = 0.0;
-		input[0][3] = 1.0;
-		input[1][0] = 1.0;
-		input[1][1] = 0.0;
-		input[1][2] = -1.0;
-		input[1][3] = -1.0;
-		input[2][0] = 1.0;
-		input[2][1] = -1.0;
-		input[2][2] = -0.5;
-		input[2][3] = -1.0;
-
-		target[0][0] = -1;
-		target[1][0] = 1;
-		target[2][0] = 1;
-
-		weight[0][0] = 0.0;
-		weight[1][0] = 0.0;
-		weight[2][0] = 0.0;
-		weight[3][0] = 0.0;
-		double momen = 0.1;
-		MultiClassPTR lala = new MultiClassPTR(num_instance, num_input, num_output, input, weight, target, max_epoch, LR, threshold, 1, momen, false);
-
 	}
 
 	public double actFunction(double input) {
 		if (actFunc == 1) {
-			if (input >= threshold) {
+			if (input >= 0) {
 				return 1;
 			} else {
 				return 0;
@@ -341,65 +227,116 @@ public class MultiClassPTR implements Classifier {
 			} else {
 				return -1;
 			}
-
 		} else if (actFunc == 3) {
-//			System.out.println("Passing sigmoid function;");
-			return (1 / (1 + Math.exp(-1 * input)));
-		} else { //linear?
-//			System.out.println("Passing linear function;");
-			return input;
+			return (1 / (1 + Math.exp(-input)));
+		}
+		return input;
+	}
+
+	@Override
+	public void buildClassifier(Instances instances) throws Exception {
+		initAttributes(instances);
+		
+		// REMEMBER: only works if class index is in the last position
+		for (int instanceIdx = 0; instanceIdx < instances.numInstances(); instanceIdx++) {
+			Instance instance = instances.get(instanceIdx);
+			double[] inputInstance = inputInstances[instanceIdx];
+			inputInstance[0] = 1.0; // initialize bias value
+			for (int attrIdx = 0; attrIdx < instance.numAttributes() - 1; attrIdx++) {
+				inputInstance[attrIdx + 1] = instance.value(attrIdx); // the first index of input instance is for bias
+			}
+		}
+
+		// Initialize target values
+		if (instances.classAttribute().isNominal()) {
+			for (int instanceIdx = 0; instanceIdx < instances.numInstances(); instanceIdx++) {
+				Instance instance = instances.instance(instanceIdx);
+				for (int classIdx = 0; classIdx < instances.numClasses(); classIdx++) {
+					targetInstances[instanceIdx][classIdx] = 0.0;
+				}
+				targetInstances[instanceIdx][(int) instance.classValue()] = 1.0;
+			}
+		} else {
+			for (int instanceIdx = 0; instanceIdx < instances.numInstances(); instanceIdx++) {
+				Instance instance = instances.instance(instanceIdx);
+				targetInstances[instanceIdx][0] = instance.classValue();
+			}
+		}
+
+		if (algo == 1) {
+			setActFunction();
+			buildClassifier();
+		} else if (algo == 2) {
+			buildClassifier();
+		} else if (algo == 3) {
+			buildClassifierBatch();
 		}
 	}
 
-    @Override
-    public void buildClassifier(Instances train) throws Exception {
-        double weightawal = 0.0;
-        double[][] input;
-        double[][] target;
-        target = new double[train.numInstances()][train.numClasses()];
-        input = new double[train.numInstances()][train.numAttributes()];
-        for (int i = 0; i < train.numInstances(); i++) {
-            for (int j = 1; j < train.numAttributes(); j++) {
-                input[i][j] = train.instance(i).value(j - 1);
-                System.out.println("input[" + i + "][" + j + "]: " + input[i][j]);
-            }
-        }
-        double[][] weight = new double[train.numAttributes()][1];
-        for (int i = 0; i < train.numAttributes(); i++) {
-            weight[i][0] = weightawal;
-        }
-        
-        
-        for(int i=0; i<train.numInstances(); i++)
-        {
-            for(int j=0; j<train.numClasses(); j++)
-            {
-                target[i][j] = train.get(i).classValue();
-                System.out.println("target["+i+"]["+j+"]: "+target[i][j]);
-            }
-        }
+	public void setActFunction() {
+		System.out.println("Masukkan fungsi aktivasi: ");
+		System.out.println("1. Step");
+		System.out.println("2. Sign");
+		System.out.println("3. Sigmoid");
+		System.out.println("0. Linear");
 
-        setAttribute(train.numInstances(), train.numAttributes() - 1, train.get(1).numClasses(), input, weight, target, max_epoch, learning_rate, threshold, algo, momentum, randomWeight);
-    }//To change body of generated methods, choose Tools | Templates.
+		actFunc = funcScan.nextInt();
+	}
 
-    @Override
-    public double classifyInstance(Instance instnc) throws Exception {
-        double[] input = new double[instnc.numAttributes()];
-        for(int i = 0; i<instnc.numAttributes(); i++)
-        {
-            input[i] = instnc.value(i);
-        }
-        return classifyInstance(input);
-    }
+	@Override
+	public double[] distributionForInstance(Instance instance) throws Exception {
+		double[] input = new double[numInput]; // remember the first index use for bias input
+		input[0] = 1.0;
+		for (int attrIdx = 0; attrIdx < instance.numAttributes() - 1; attrIdx++) { // we ignore the class value
+			input[attrIdx+1] = instance.value(attrIdx);
+		}
 
-    @Override
-    public double[] distributionForInstance(Instance instnc) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+		double[] output = new double[numOutput];
+		double totalVal = 0.0;
+		System.out.println("=========================");
+		for (int outputIdx = 0; outputIdx < numOutput; outputIdx++) {
+			output[outputIdx] = 0.0;
+			for (int inputIdx = 0; inputIdx < numInput; inputIdx++) {
+				output[outputIdx] += input[inputIdx] * weight[inputIdx][outputIdx];
+			}
+			output[outputIdx] = actFunction(output[outputIdx]);
+			System.out.print(output[outputIdx] + " ");
+			totalVal += Math.exp(output[outputIdx]);
+		}
+		for (int out = 0; out < numOutput; out++) {
+			output[out] = Math.exp(output[out]) / totalVal;
+		}
+		return output;
+	}
 
-    @Override
-    public Capabilities getCapabilities() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+	@Override
+	public Capabilities getCapabilities() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public Enumeration<Option> listOptions() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public void setOptions(String[] strings) throws Exception {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public String[] getOptions() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public void setSeed(int i) {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public int getSeed() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
 
 }
